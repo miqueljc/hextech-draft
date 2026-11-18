@@ -439,7 +439,9 @@ input,select,textarea{font-size:16px!important}
 .turn-banner .btn-primary{grid-column:1/-1}
 .filter-pills{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:6px;scrollbar-width:none}
 .filter-pills .pill{flex:0 0 auto;padding:9px 13px;font-size:.78rem}
-.champ-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))!important;max-height:48vh;overflow:auto}
+.champ-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))!important;max-height:none!important;overflow:visible!important}
+.sheet{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.table-wrap,.mchips,.filter-pills{touch-action:pan-x pan-y}
 .champ-chip{min-height:44px;font-size:.78rem}
 .search-bar{position:sticky;top:56px;z-index:5}
 .panel{padding:10px}
