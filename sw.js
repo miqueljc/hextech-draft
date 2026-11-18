@@ -1,5 +1,5 @@
 // Service worker: l'app funciona sense connexió. Canvieu VERSION en pujar una versió nova.
-const VERSION = 'hextech-draft-v3';
+const VERSION = 'hextech-draft-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -10,6 +10,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  if (new URL(req.url).pathname.endsWith('/data.json')) return; // dades compartides: sempre xarxa
   // pàgina: xarxa primer (agafa actualitzacions), cau si no hi ha connexió
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(VERSION).then(c => c.put('index.html', cp)); return r; })

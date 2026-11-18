@@ -678,6 +678,8 @@ body.shared .bottomnav,body.shared .appbar-btn{display:none}
 <div id="tab-data" class="tab-content">
   <div class="panel">
     <div class="panel-header"><span>🛠️ Dades i Editors</span></div>
+    <div id="sharedStatus" style="font-size:0.8rem;margin:8px 0;padding:8px 10px;border:1px solid rgba(200,155,60,.4);border-radius:8px;background:rgba(10,20,40,.6);"></div>
+    <div style="margin-bottom:10px;"><button class="btn" onclick="exportLocal()">📋 Copia les meves dades locals</button> <small style="color:var(--text-muted);">per enviar-les a l'administrador i que les pugi a les dades compartides</small></div>
     <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">Tot el que canvieu aquí es desa al navegador i recalcula recomanacions, comps i anàlisi. Cada editor té un botó per tornar als valors per defecte.</p>
     <details open class="data-box"><summary>1. Importar winrates reals (op.gg)</summary><div id="opggImport"></div></details>
     <details class="data-box"><summary>2a. Counters de lane (campió &gt; campions als quals guanya la línia)</summary>
@@ -2182,7 +2184,7 @@ function sanitizeRolePools(raw) {
 }
 function applyRolePools() {
   let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(ROLEPOOL_LS_KEY) || 'null'); } catch (e) { saved = null; }
+  saved = lsGet(ROLEPOOL_LS_KEY);
   ROSTER.forEach((pl, i) => {
     if (!pl.basePool) pl.basePool = [...pl.pool];
     const custom = saved && saved[i] ? sanitizeRolePools(saved[i]) : null;
@@ -2919,7 +2921,8 @@ function generateComps() {
 
 // ================= DADES I EDITORS (op.gg, counters, sinergies, tier list, etiquetes) =================
 const LS = { opgg: 'hextech_opgg_v1', counters: 'hextech_counters_v1', syn: 'hextech_synergy_v1', tier: 'hextech_tier_v1', tags: 'hextech_tags_v1', ext: 'hextech_extcounters_v1' };
-function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+var SHARED = null, SHARED_META = null;
+function lsGet(k) { if (SHARED && SHARED[k] !== undefined) return SHARED[k]; try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function clearCaches() { _assignCache.clear(); _enemyCache.clear(); }
 const TAG_LIST = ['front', 'eng', 'peel', 'poke', 'dive', 'assn', 'rng', 'mob', 'combo', 'scale', 'early', 'split', 'ap', 'ad'];
@@ -4773,6 +4776,52 @@ try{ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) nav
   if(m){const d=decodeShare(m[1]); if(d&&d.v===1){showSharedView(d);return;}}
   switchTab('draft');
 })();
+
+// ===== Dades compartides (data.json a GitHub): manen sobre les dades locals =====
+const SHARED_URL = 'https://miqueljc.github.io/hextech-draft/data.json';
+const SHARED_CACHE = 'hextech_shared_cache_v1';
+const SHARED_LOCAL_KEYS = ['hextech_rolepools_v1', 'hextech_opgg_v1', 'hextech_counters_v1', 'hextech_synergy_v1', 'hextech_tier_v1', 'hextech_tags_v1', 'hextech_extcounters_v1'];
+function setShared(j) {
+  if (j && j.data && typeof j.data === 'object') { SHARED = j.data; SHARED_META = { version: j.version || '', updated: j.updated || '', keys: Object.keys(j.data).length }; }
+  else { SHARED = null; SHARED_META = null; }
+}
+try { setShared(JSON.parse(localStorage.getItem(SHARED_CACHE) || 'null')); } catch (e) {}
+function renderSharedStatus(st) {
+  const el = document.getElementById('sharedStatus'); if (!el) return;
+  const m = SHARED_META;
+  let t;
+  if (!m) t = st === 'off' ? '⚠️ Dades compartides no disponibles (sense connexió o encara no publicades). S\'usen les dades locals.' : '⏳ Carregant dades compartides…';
+  else {
+    const n = m.keys;
+    t = `${st === 'ok' ? '✅' : '📦'} Dades compartides actives (versió ${escapeHtml(String(m.version))}, ${escapeHtml(String(m.updated))})` + (st === 'cache' ? ' — sense connexió, mostrant l\'última còpia' : '') + '. ' +
+      (n ? `Els ${n} camps compartits manen sobre els editors locals; la resta es guarda només en aquest dispositiu.` : 'Cap camp compartit per ara; els editors locals funcionen amb normalitat.');
+  }
+  el.innerHTML = t;
+}
+async function fetchShared() {
+  try {
+    const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(SHARED_URL + '?t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+    clearTimeout(to);
+    if (!r.ok) throw new Error('http ' + r.status);
+    const j = await r.json();
+    const txt = JSON.stringify(j); let prev = null;
+    try { prev = localStorage.getItem(SHARED_CACHE); localStorage.setItem(SHARED_CACHE, txt); } catch (e) {}
+    setShared(j);
+    if (prev !== txt) { afterDataChange(); renderAll(); }
+    renderSharedStatus('ok');
+  } catch (e) { renderSharedStatus(SHARED ? 'cache' : 'off'); }
+}
+function exportLocal() {
+  const data = {};
+  SHARED_LOCAL_KEYS.forEach(k => { try { const v = localStorage.getItem(k); if (v) data[k] = JSON.parse(v); } catch (e) {} });
+  const txt = JSON.stringify({ version: 'local', updated: new Date().toISOString().slice(0, 10), data }, null, 1);
+  const done = () => { try { alert(Object.keys(data).length ? `Copiat (${Object.keys(data).length} camps). Enganxa-ho a Claude.` : 'No tens dades locals editades.'); } catch (e) {} };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => prompt('Copia aquest text:', txt));
+  else prompt('Copia aquest text:', txt);
+}
+renderSharedStatus();
+fetchShared();
 </script>
 </body>
 </html>
