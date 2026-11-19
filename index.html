@@ -773,7 +773,7 @@ const ROSTER = [
       { champ: "Evelynn", wr: "51% WR (76 partides)", bonus: 15 },
       { champ: "Bel'Veth", wr: "50% WR (96 partides)", bonus: 12 }
     ],
-    pool: ["Zaahen", "Evelynn", "Bel'Veth", "Nocturne", "Cho'Gath", "Wukong", "Vi", "Zyra", "Ekko", "Lillia", "Zac", "Fiddlesticks", "Qiyana", "Amumu", "Mordekaiser", "Rammus", "Sejuani", "Sion", "Naafiri", "Lee Sin"]
+    pool: ["Zaahen", "Mordekaiser", "Fiddlesticks", "Zac", "Qiyana", "Bel'Veth", "Amumu", "Evelynn", "Sion", "Rammus", "Aurelion Sol", "Malphite"]
   },
   {
     name: "RoninKamui66#PIXAR",
@@ -5700,11 +5700,17 @@ function renderMatch() {
 // Rols reals d'un campió: els públics o amb taxa de pick >= 3%. Un pool d'un jugador en un rol on el campió
 // no es juga (p. ex. Caitlyn al Top) no el converteix en flex.
 // Rols viables: els que tenen almenys un 5% dels picks reals del campió (metabot.gg). Sense dades, els públics.
+// + rols propis de l'equip (data.json → hextech_teamroles_v1): combinacions poc habituals que l'equip juga de veritat
+let TEAM_ROLES = {};
+function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : {}; }
+loadTeamRoles();
+const _afterDataChangeBaseQ = afterDataChange;
+afterDataChange = function () { loadTeamRoles(); _afterDataChangeBaseQ(); };
 function viableRoles(c) {
-  const pub = champRoles(c);
-  if (!ROLE_RATES[c]) return pub;
-  const d = roleDistOfChamp(c), v = ROLE_ORDER.filter((r, i) => d[i] >= 0.05);
-  return v.length ? v : pub;
+  const pub = champRoles(c), extra = (TEAM_ROLES[c] || []).filter(r => ROLE_ORDER.includes(r));
+  let v = pub;
+  if (ROLE_RATES[c]) { const d = roleDistOfChamp(c), w = ROLE_ORDER.filter((r, i) => d[i] >= 0.05); if (w.length) v = w; }
+  return extra.length ? ROLE_ORDER.filter(r => v.includes(r) || extra.includes(r)) : v;
 }
 const _ourRolesForBaseQ = ourRolesFor;
 ourRolesFor = function (c) { const b = _ourRolesForBaseQ(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; };

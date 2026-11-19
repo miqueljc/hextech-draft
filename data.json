@@ -1,11 +1,11 @@
 {
- "version": 7,
+ "version": 8,
  "updated": "2026-11-19",
  "source": "Counters/lane matchups: real winrates from metabot.gg per champion (patches 26.19-26.22, mostly 26.22; no 26.23 matchup data published yet), ~130 champions with own page + inverted data for the rest. Synergies: engine-derived + external duos + metabot.gg duos for ~12 champions. Pools: team pools. Duos (synergies): real winrates from metabot.gg 26.20-26.22 (bot lane duo tier list plus per-champion partner pages for ~35 champions). Matchups: winrate per matchup (metabot.gg 26.19-26.22, 2228 pairs). Duo WR: 247 pairs. Role rates: pick rate per role (metabot.gg tier lists 26.22, ADC 26.23).",
  "data": {
   "hextech_rolepools_v1": {
    "0": {"Top":["Malphite","Galio","Ornn","Sett","Garen","Darius","Teemo","Shen","Kled","Nasus","Kayle","Illaoi","Smolder","Zaahen","Tahm Kench","Mordekaiser","Gnar","Volibear","Doctor Mundo","Jax","Camille","Poppy","Maokai","Swain","Miss Fortune","Sejuani","Caitlyn","Ashe","Lillia"],"Sup":["Galio","Tahm Kench","Poppy","Milio","Neeko","Renata Glasc","Alistar","Morgana","Nautilus","Rell","Thresh","Maokai","Zyra","Nami","Swain","Blitzcrank","Karma"]},
-   "1": {"Jg":["Zaahen","Evelynn","Bel'Veth","Nocturne","Cho'Gath","Wukong","Vi","Zyra","Ekko","Lillia","Zac","Fiddlesticks","Qiyana","Amumu","Mordekaiser","Rammus","Sejuani","Naafiri","Lee Sin","Sion","Aurelion Sol"]},
+   "1": {"Top":["Zaahen","Aurelion Sol","Mordekaiser","Malphite"],"Jg":["Zaahen","Mordekaiser","Fiddlesticks","Zac","Qiyana","Bel'Veth","Amumu","Evelynn","Sion","Rammus"]},
    "2": {"Top":["Galio","Yasuo","Yone","Malphite","Illaoi"],"Mid":["Vex","Ahri","Diana","Galio","Ekko","Lissandra","Yasuo","LeBlanc","Yone","Veigar","Sylas","Malzahar","Naafiri","Neeko","Lux"]},
    "3": {"Bot":["Kai'Sa","Caitlyn","Miss Fortune","Jinx","Xayah","Smolder","Ziggs","Jhin","Yunara","Ashe","Varus","Sivir","Ezreal","Tristana","Samira","Draven","Mel","Darius","Teemo"]},
    "4": {"Bot":["Seraphine","Senna","Caitlyn","Miss Fortune","Ezreal","Jinx","Ashe","Kai'Sa","Varus","Jhin"],"Sup":["Pyke","Nautilus","Leona","Braum","Milio","Morgana","Seraphine","Rell","Zyra","Thresh","Senna","Nami","Bard","Neeko","Alistar","Tahm Kench","Poppy","Karma","Blitzcrank","Janna","Lux","Lulu","Rakan","Zilean","Swain","Mel","Shen","Lee Sin"]}
@@ -1732,6 +1732,11 @@
    "Yuumi": [0,0,0,0,2.6],
    "Karma": [0,0,0,0,3],
    "Bard": [0,0,0,0,2]
+  },
+  "hextech_teamroles_v1": {
+   "Mordekaiser": ["Jg"],
+   "Sion": ["Jg"],
+   "Aurelion Sol": ["Top"]
   }
  }
 }
