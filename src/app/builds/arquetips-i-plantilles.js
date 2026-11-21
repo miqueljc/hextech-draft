@@ -417,7 +417,7 @@ function bootsFor(c, role, arch, x, T) {
   return b;
 }
 
-function adviseBuild__base(c, role, x) {
+function templateBuild(c, role, x) {
   const arch = archFor(c, role), T = BUILD_T[arch];
   const kind = (ARCH[c] || {}).kind || '';
   const [keystone, keyWhy] = T.key(c, role, x, kind);

@@ -9,9 +9,7 @@ const OP_BONUS = 14, COUNTER_BONUS = 12;
 // Afegeix (no substitueix) dos motius a la recomanació de picks:
 //  - OP del parc al vostre pool per a un rol vostre lliure on el rival encara no ha ensenyat el seu pick de línia
 //  - counter real (WR de matchup) al vostre pool contra un pick rival del mateix rol
-function recommendChamps__u(ctx, excludeIdx) {
-  ctx = ctx || buildCtx();
-  const out = recommendChamps__n(ctx, excludeIdx);
+function addOpAndCounterBonus(out, ctx, excludeIdx) {
   try {
     const slots = getOurPicks(), ally = slots.filter((c, i) => c && i !== excludeIdx);
     const open = ourOpenRoles(ally), info = enemyRoleInfo(), miss = enemyMiss(info, ctx.enemyPicks);
@@ -42,7 +40,6 @@ function recommendChamps__u(ctx, excludeIdx) {
     });
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('opCounter', e); }
-  return out;
 }
 // Línies destacades al quadre de recomanació en directe (torn de pick vostre)
 function opCounterAdviceHtml() {
@@ -55,13 +52,6 @@ function opCounterAdviceHtml() {
   if (ops.length) h += `<br><span style="color:var(--gold);">⭐ OP del ${escapeHtml(OP_PICKS.patch || '')} al vostre pool (línia rival encara oculta):</span> ${ops.map(r => `<strong>${escapeHtml(r.champ)}</strong> (${r.flags.op})`).join(' · ')}`;
   if (cts.length) h += `<br><span style="color:var(--blue);">🎯 Counters al vostre pool:</span> ${cts.map(r => `<strong>${escapeHtml(r.champ)}</strong> contra ${escapeHtml(r.flags.counter)}`).join(' · ')}`;
   return h;
-}
-function getLiveAdvice__u(ranked) {
-  const h = getLiveAdvice__n(ranked);
-  let x = '';
-  try { x = opCounterAdviceHtml(); } catch (e) { console.warn(e); }
-  if (!x) return h;
-  return h + x;
 }
 // Distintius a les targetes (escriptori i mode partida)
 function flagBadges(r) {

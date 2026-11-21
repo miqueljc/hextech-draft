@@ -1820,7 +1820,7 @@ function bootsFor(c, role, arch, x, T) {
   return b;
 }
 
-function adviseBuild__base(c, role, x) {
+function templateBuild(c, role, x) {
   const arch = archFor(c, role), T = BUILD_T[arch];
   const kind = (ARCH[c] || {}).kind || '';
   const [keystone, keyWhy] = T.key(c, role, x, kind);
@@ -2290,7 +2290,7 @@ function draftSnapshotText(A, B, ourChamps) {
   return parts.length ? `<br><span style="color:var(--text-muted);">${parts.join(' ')}</span>` : '';
 }
 
-function getLiveAdvice__base(rankedComps) {
+function liveAdviceText(rankedComps) {
   const ctx = buildCtx();
   ctx.ranked = rankedComps;
   ctx.comp = pickComp(rankedComps);
@@ -2517,7 +2517,7 @@ function genRolePerms() {
 // Diferència entre dues comps: rols on canvia el campió o el jugador
 function genDiff(a, b) { return a.team.filter((c, i) => c !== b.team[i] || a.perm[i] !== b.perm[i]).length; }
 
-function generateComps__base() {
+function generateAutoComps() {
   for (let i = COMPS.length - 1; i >= 0; i--) if (COMPS[i].gen) COMPS.splice(i, 1);
   const perms = genRolePerms();
   if (!perms.length) { state.selectedCompId = COMPS.some(c => c.id === state.selectedCompId) ? state.selectedCompId : null; return; }
@@ -3394,7 +3394,7 @@ function toggleSelectComp(id) {
 
 // ================= ANÀLISI DE MATCHUP (amb rols assignats) =================
 
-function buildStrategy__base() {
+function analyzeDraft() {
   const ranked = evaluateComps();
   const comp = pickComp(ranked);
   const asg = getAssignment();
@@ -4069,7 +4069,7 @@ function laneOppsFor(role) {
 }
 function namesOf(list, max = 3) { return list.slice(0, max).join(', ') + (list.length > max ? '…' : ''); }
 
-function personalizeBuild__base(adv, c, role, x) {
+function adaptBuildToGame(adv, c, role, x) {
   const arch = adv.arch, T = BUILD_T[arch], enemy = x.enemy || [], our = x.our || [];
   const fragile = FRAGILE_ARCH.has(arch), tankish = ['TK', 'TS'].includes(arch);
   const dealers = enemy.filter(e => !['TK', 'TS'].includes((ARCH[e] || {}).code));
@@ -4169,7 +4169,7 @@ function personalizeBuild__base(adv, c, role, x) {
 }
 
 function adviseBuild(c, role, x) {
-  const b = adviseBuild__base(c, role, x);
+  const b = templateBuild(c, role, x);
   try { return personalizeBuild(b, c, role, x); } catch (e) { console.warn('personalizeBuild', e); return b; }
 }
 
@@ -4496,23 +4496,24 @@ function exportHist() {
   const done = () => { const el = document.getElementById('histMsg'); if (el) el.textContent = '📋 Historial copiat (JSON). Envia-me\'l si vols que el publiqui a les dades compartides.'; };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, done); else done();
 }
-function renderHistory__base() {
+function renderHistory() {
   let el = document.getElementById('histPanel');
   if (!el) { const tab = document.getElementById('tab-data'); if (!tab) return; el = document.createElement('div'); el.id = 'histPanel'; el.className = 'panel'; el.style.marginTop = '12px'; tab.appendChild(el); }
   const w = DRAFT_HIST.filter(h => h.result === 'W').length, n = DRAFT_HIST.length;
+  const sh = sharedHist().length, all = allHist(), wAll = all.filter(h => h.result === 'W').length;
   const rows = DRAFT_HIST.slice(-10).reverse().map((h, k) => {
     const i = n - 1 - k;
     return `<div style="font-size:0.74rem;margin-top:4px;display:flex;gap:6px;align-items:flex-start;"><span>${h.result === 'W' ? '✅' : '❌'}</span><span style="flex:1;">${escapeHtml(h.date)} · ${h.side === 'BLUE' ? 'blau' : 'vermell'}${h.rival ? ' vs ' + escapeHtml(h.rival) : ''} — ${h.roles.filter(x => x.champ).map(x => escapeHtml(x.champ)).join(', ')} <span style="color:var(--text-muted);">vs ${h.enemy.map(escapeHtml).join(', ')}</span></span><button class="btn" style="min-height:0;padding:2px 8px;" onclick="deleteHist(${i})">✕</button></div>`;
   }).join('');
   el.innerHTML = `<div class="panel-title">📒 Historial de drafts de l'equip</div>
-    <div style="font-size:0.78rem;">${n ? `${n} drafts desats · ${w}V-${n - w}D. Amb 2+ partides d'un jugador amb un campió, el motor suma o resta segons el resultat (amb mostra encongida).` : 'Encara no hi ha drafts desats. En acabar un draft, desa el resultat des del quadre de consells.'}</div>
+    <div style="font-size:0.78rem;">${all.length ? `${all.length} partides en total (${sh} compartides per l'equip, ${DRAFT_HIST.length} d'aquest dispositiu) · ${wAll}V-${all.length - wAll}D. El motor en té en compte el resultat per jugador i campió i per parelles de campions (a partir de 2 partides).` : 'Encara no hi ha partides desades. En acabar un draft, desa el resultat (✅/❌).'}<br><span style="color:var(--text-muted);">Per compartir les d'aquest dispositiu amb tot l'equip: «Copia l'historial» i envia-m'ho.</span></div>
     ${rows}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"><button class="btn" onclick="exportHist()">📋 Copia l'historial</button><button class="btn" onclick="clearHist()">🗑️ Esborra'l tot</button></div>
     <div id="histMsg" style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;"></div>`;
 }
 
 // ---- Recomanació de picks (substitueix l'anterior) ----
-function recommendChamps__n(ctx, excludeIdx) {
+function scoreChampions(ctx, excludeIdx) {
   ctx = ctx || buildCtx();
   const slots = getOurPicks();
   const ally = slots.filter((c, i) => c && i !== excludeIdx);
@@ -4665,7 +4666,14 @@ function recommendChamps__n(ctx, excludeIdx) {
   });
   return out.sort((a, b) => b.score - a.score);
 }
-
+// Recomanació de picks: puntuació base (motor amb winrates reals) + OP del parc i counters del pool + parelles de l'historial
+function recommendChamps(ctx, excludeIdx) {
+  ctx = ctx || buildCtx();
+  const out = scoreChampions(ctx, excludeIdx);
+  addOpAndCounterBonus(out, ctx, excludeIdx);
+  addDuoHistoryBonus(out, excludeIdx);
+  return out;
+}
 // ---- Bans ----
 function recommendBans(ctx) {
   const ours = ctx.ourPicks, enemy = ctx.enemyPicks;
@@ -4759,7 +4767,7 @@ function ourAnswersTo(enemyChamp, ctx) {
 }
 
 // ---- Matchups de línia i tooltips amb WR real ----
-function laneMatchup__n(c, e, role) {
+function laneMatchupRules(c, e, role) {
   let score = 0;
   const notes = [];
   const m = muScore(c, e);
@@ -4819,7 +4827,22 @@ function realMatchupNote(c, e) {
   if (m.adv >= 2) return m.real ? `tu counteges ${e}: ${m.wr}% en ${m.g} partides` : `tu counteges ${e} segons les llistes`;
   return '';
 }
-
+// --- 3. Veredicte de línia: un winrate real clar mana sobre les regles generals ---
+function laneMatchup(c, e, role) {
+  const r = laneMatchupRules(c, e, role);
+  try {
+    const m = muScore(c, e);
+    if (!m.real || Math.abs(m.adv) < 2.5) return r;
+    // part del resultat que ve del winrate real (mateixa fórmula que el bloc N)
+    const realPart = Math.max(-4, Math.min(4, Math.round(m.adv / 2))) || Math.sign(m.adv);
+    const rest = r.score - realPart;
+    // amb un winrate real clar (≥2,5 punts ajustats), les regles generals només poden matisar ±1
+    const capped = realPart + Math.max(-1, Math.min(1, rest));
+    const sign = Math.sign(m.adv);
+    const score = sign > 0 ? Math.max(capped, 2) : Math.min(capped, -2);
+    return { score, notes: r.notes };
+  } catch (err) { return r; }
+}
 // ---- Picks dobles: millor parella ----
 function pairRecs(ctx, i1, i2, n) {
   const arr = getOurPicks(), o1 = arr[i1], o2 = arr[i2], saved = state.assign;
@@ -4851,11 +4874,6 @@ function saveResultHtml() {
   const all = [...state.bluePicks, ...state.redPicks].filter(Boolean).length;
   if (all < 10) return '';
   return `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="color:var(--text-muted);">💾 Desa el resultat al vostre historial:</span><button class="btn" onclick="saveDraftResult('W')">✅ Victòria</button><button class="btn" onclick="saveDraftResult('L')">❌ Derrota</button><span id="histSaved" style="color:var(--text-muted);"></span></div>`;
-}
-function getLiveAdvice__n(ranked) {
-  let h = getLiveAdvice__base(ranked);
-  try { h += pairAdviceHtml() + saveResultHtml(); } catch (e) { console.warn('pairAdvice', e); }
-  return h;
 }
 
 // ---- Notes del parc: ja oficials ----
@@ -5335,7 +5353,7 @@ function groupComps() {
 function generateComps() {
   // restaura les oficials abans de regenerar (les auto es tornen a crear)
   COMPS.forEach(c => { if (!c.gen && c.baseRoles) c.roles = JSON.parse(JSON.stringify(c.baseRoles)); });
-  generateComps__base();
+  generateAutoComps();
   try { groupComps(); } catch (e) { console.warn('groupComps', e); }
 }
 
@@ -5692,9 +5710,7 @@ const OP_BONUS = 14, COUNTER_BONUS = 12;
 // Afegeix (no substitueix) dos motius a la recomanació de picks:
 //  - OP del parc al vostre pool per a un rol vostre lliure on el rival encara no ha ensenyat el seu pick de línia
 //  - counter real (WR de matchup) al vostre pool contra un pick rival del mateix rol
-function recommendChamps__u(ctx, excludeIdx) {
-  ctx = ctx || buildCtx();
-  const out = recommendChamps__n(ctx, excludeIdx);
+function addOpAndCounterBonus(out, ctx, excludeIdx) {
   try {
     const slots = getOurPicks(), ally = slots.filter((c, i) => c && i !== excludeIdx);
     const open = ourOpenRoles(ally), info = enemyRoleInfo(), miss = enemyMiss(info, ctx.enemyPicks);
@@ -5725,7 +5741,6 @@ function recommendChamps__u(ctx, excludeIdx) {
     });
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('opCounter', e); }
-  return out;
 }
 // Línies destacades al quadre de recomanació en directe (torn de pick vostre)
 function opCounterAdviceHtml() {
@@ -5738,13 +5753,6 @@ function opCounterAdviceHtml() {
   if (ops.length) h += `<br><span style="color:var(--gold);">⭐ OP del ${escapeHtml(OP_PICKS.patch || '')} al vostre pool (línia rival encara oculta):</span> ${ops.map(r => `<strong>${escapeHtml(r.champ)}</strong> (${r.flags.op})`).join(' · ')}`;
   if (cts.length) h += `<br><span style="color:var(--blue);">🎯 Counters al vostre pool:</span> ${cts.map(r => `<strong>${escapeHtml(r.champ)}</strong> contra ${escapeHtml(r.flags.counter)}`).join(' · ')}`;
   return h;
-}
-function getLiveAdvice__u(ranked) {
-  const h = getLiveAdvice__n(ranked);
-  let x = '';
-  try { x = opCounterAdviceHtml(); } catch (e) { console.warn(e); }
-  if (!x) return h;
-  return h + x;
 }
 // Distintius a les targetes (escriptori i mode partida)
 function flagBadges(r) {
@@ -5830,7 +5838,9 @@ function recPick(c) { _recSel = null; pickChampion(c); }
 let _recDetailOpen = false;
 function toggleRecDetail() { _recDetailOpen = !_recDetailOpen; const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen); }
 function getLiveAdvice(ranked) {
-  const h = getLiveAdvice__u(ranked);
+  let h = liveAdviceText(ranked);
+  try { h += pairAdviceHtml() + saveResultHtml(); } catch (e) { console.warn('pairAdvice', e); }
+  try { h += opCounterAdviceHtml(); } catch (e) { console.warn(e); }
   let g = '';
   try { g = recGridHtml(); } catch (e) { console.warn('recGrid', e); }
   try { const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen || !g); } catch (e) {}
@@ -6031,7 +6041,7 @@ function personalizeBuild(adv, c, role, x) {
   } else if (role === 'Jg') {
     a = { ...adv, start: `${JG_PET[adv.arch] || 'Gustwalker Hatchling'} + Health Potion` };
   }
-  const r = personalizeBuild__base(a, c, role, x);
+  const r = adaptBuildToGame(a, c, role, x);
   return finishBuild(r, a, c, role, x);
 }
 function finishBuild(r, a, c, role, x) {
@@ -6251,7 +6261,7 @@ function groupedThreats(s, carry) {
   return [...by.entries()].sort((a, b) => score(b[1]) - score(a[1])).map(([t, list]) => ({ champ: list.join(', '), txt: escapeHtml(t) }));
 }
 function buildStrategy() {
-  const s = buildStrategy__base();
+  const s = analyzeDraft();
   try {
     const carry = mainCarry(s.lanes);
     s.deep = { tf: teamfightPlan(s), obj: objectivePlan(s), lanes: s.lanes.map(l => ({ l, txt: laneDetail(l, s), job: roleJob(l, s, carry, engagersOf(s.lanes)) })).filter(x => x.txt), carry };
@@ -6326,11 +6336,10 @@ function duoRec(a, b) {
 }
 
 // --- 2. Recomanacions: parelles que ja heu jugat juntes (mínim 2 partides, mostra encongida) ---
-function recommendChamps(ctx, excludeIdx) {
-  const out = recommendChamps__u(ctx, excludeIdx);
+function addDuoHistoryBonus(out, excludeIdx) {
   try {
     const ally = getOurPicks().filter((c, i) => c && i !== excludeIdx);
-    if (!ally.length || !allHist().length) return out;
+    if (!ally.length || !allHist().length) return;
     out.forEach(r => {
       let best = null;
       ally.forEach(a => { const v = duoRec(r.champ, a); if (!v || v.w + v.l < 2) return; const pts = Math.round(((v.w + 2) / (v.w + v.l + 4) - 0.5) * 24); if (!best || Math.abs(pts) > Math.abs(best.pts)) best = { a, v, pts }; });
@@ -6341,25 +6350,8 @@ function recommendChamps(ctx, excludeIdx) {
     });
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('duoRec', e); }
-  return out;
 }
 
-// --- 3. Veredicte de línia: un winrate real clar mana sobre les regles generals ---
-function laneMatchup(c, e, role) {
-  const r = laneMatchup__n(c, e, role);
-  try {
-    const m = muScore(c, e);
-    if (!m.real || Math.abs(m.adv) < 2.5) return r;
-    // part del resultat que ve del winrate real (mateixa fórmula que el bloc N)
-    const realPart = Math.max(-4, Math.min(4, Math.round(m.adv / 2))) || Math.sign(m.adv);
-    const rest = r.score - realPart;
-    // amb un winrate real clar (≥2,5 punts ajustats), les regles generals només poden matisar ±1
-    const capped = realPart + Math.max(-1, Math.min(1, rest));
-    const sign = Math.sign(m.adv);
-    const score = sign > 0 ? Math.max(capped, 2) : Math.min(capped, -2);
-    return { score, notes: r.notes };
-  } catch (err) { return r; }
-}
 
 // --- 4. Text de Discord: instruccions per jugador sense campions aliens + pla detallat ---
 function copyDiscordPlan() {
@@ -6404,15 +6396,6 @@ function deliverPlanText(out, nParts) {
 }
 
 // --- 5. Historial: indica quantes partides venen de l'equip (compartides) ---
-function renderHistory() {
-  renderHistory__base();
-  try {
-    const el = document.getElementById('histPanel'); if (!el) return;
-    const sh = sharedHist().length, all = allHist(), w = all.filter(h => h.result === 'W').length;
-    const t = el.querySelector('.panel-title + div');
-    if (t) t.innerHTML = `${all.length ? `${all.length} partides en total (${sh} compartides per l'equip, ${DRAFT_HIST.length} d'aquest dispositiu) · ${w}V-${all.length - w}D. El motor en té en compte el resultat per jugador i campió i per parelles de campions (a partir de 2 partides).` : 'Encara no hi ha partides desades. En acabar un draft, desa el resultat (✅/❌).'}<br><span style="color:var(--text-muted);">Per compartir les d'aquest dispositiu amb tot l'equip: «Copia l'historial» i envia-m'ho.</span>`;
-  } catch (e) {}
-}
 
 init();
 

@@ -15,7 +15,7 @@ function laneOppsFor(role) {
 }
 function namesOf(list, max = 3) { return list.slice(0, max).join(', ') + (list.length > max ? '…' : ''); }
 
-function personalizeBuild__base(adv, c, role, x) {
+function adaptBuildToGame(adv, c, role, x) {
   const arch = adv.arch, T = BUILD_T[arch], enemy = x.enemy || [], our = x.our || [];
   const fragile = FRAGILE_ARCH.has(arch), tankish = ['TK', 'TS'].includes(arch);
   const dealers = enemy.filter(e => !['TK', 'TS'].includes((ARCH[e] || {}).code));
@@ -115,8 +115,7 @@ function personalizeBuild__base(adv, c, role, x) {
 }
 
 function adviseBuild(c, role, x) {
-  const b = adviseBuild__base(c, role, x);
+  const b = templateBuild(c, role, x);
   try { return personalizeBuild(b, c, role, x); } catch (e) { console.warn('personalizeBuild', e); return b; }
 }
 
-/*@DATA@*/

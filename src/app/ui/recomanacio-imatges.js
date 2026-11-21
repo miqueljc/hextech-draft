@@ -69,7 +69,9 @@ function recPick(c) { _recSel = null; pickChampion(c); }
 let _recDetailOpen = false;
 function toggleRecDetail() { _recDetailOpen = !_recDetailOpen; const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen); }
 function getLiveAdvice(ranked) {
-  const h = getLiveAdvice__u(ranked);
+  let h = liveAdviceText(ranked);
+  try { h += pairAdviceHtml() + saveResultHtml(); } catch (e) { console.warn('pairAdvice', e); }
+  try { h += opCounterAdviceHtml(); } catch (e) { console.warn(e); }
   let g = '';
   try { g = recGridHtml(); } catch (e) { console.warn('recGrid', e); }
   try { const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen || !g); } catch (e) {}

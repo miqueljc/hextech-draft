@@ -11,13 +11,20 @@ Assistent de draft de League of Legends per a l'equip. Funciona com una sola pà
 
 | Carpeta / fitxer | Què hi ha |
 | --- | --- |
-| `src/legacy/desk_v12pre.html` | Versió base de l'app (escriptori) |
-| `src/blocks/block*.js` | Mòduls que s'hi afegeixen (motor, mode partida, builds, pla de partida...) |
+| `src/app/template.html` | HTML i estils de l'escriptori |
+| `src/app/modules.txt` | Ordre de càrrega dels mòduls JS |
+| `src/app/data/` | Dades de l'app: roster i pools, etiquetes dels campions, context del parc, dades compartides |
+| `src/app/engine/` | Motor: rols i assignació, recomanació de picks i bans, predicció del rival, matchups, aprenentatge |
+| `src/app/builds/` | Runes i objectes: plantilles, builds reals i personalització per a cada partida |
+| `src/app/plan/` | Anàlisi del draft i pla de partida |
+| `src/app/ui/` | Pantalles: render, filtres, mode partida, icones, aspecte d'escriptori |
+| `src/mobile/` | Versió mòbil (es munta a partir de l'escriptori) |
 | `src/data/*.json` | Còpia de les dades que l'app porta per funcionar sense connexió |
-| `src/build_desktop.py`, `src/build_mobile.py` | Munten l'escriptori i, a partir d'ell, el mòbil |
 | `data.json` | Dades compartides que l'app descarrega en obrir-se (pools, matchups, builds, rivals, historial...) |
 | `tools/` | Eines per actualitzar `data.json` (vegeu `tools/README.md`) |
-| `tests/` | Proves automàtiques |
+| `tests/` | Proves automàtiques (inclosa la de referència, `tests/golden`) |
+
+Cada funció es defineix una sola vegada. Les funcions es poden moure entre mòduls; el codi de primer nivell (variables, estils injectats, crides d'inici) depèn de l'ordre de `modules.txt`.
 
 ## Treballar-hi
 
@@ -25,7 +32,7 @@ Assistent de draft de League of Legends per a l'equip. Funciona com una sola pà
 python3 build.py      # genera pc.html i index.html
 npm install           # només la primera vegada (Playwright)
 npx playwright install chromium
-npm test              # totes les proves (~40 s)
+npm test              # totes les proves (~4 min, la de referència juga 210 drafts)
 ```
 
 Després de canviar l'app, cal pujar la versió de la memòria cau a `sw.js` (`hextech-draft-vNN`) perquè els mòbils agafin la nova.

@@ -1,6 +1,6 @@
 // ================= ANÀLISI DE MATCHUP (amb rols assignats) =================
 
-function buildStrategy__base() {
+function analyzeDraft() {
   const ranked = evaluateComps();
   const comp = pickComp(ranked);
   const asg = getAssignment();

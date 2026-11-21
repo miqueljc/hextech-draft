@@ -187,7 +187,7 @@ function genRolePerms() {
 // Diferència entre dues comps: rols on canvia el campió o el jugador
 function genDiff(a, b) { return a.team.filter((c, i) => c !== b.team[i] || a.perm[i] !== b.perm[i]).length; }
 
-function generateComps__base() {
+function generateAutoComps() {
   for (let i = COMPS.length - 1; i >= 0; i--) if (COMPS[i].gen) COMPS.splice(i, 1);
   const perms = genRolePerms();
   if (!perms.length) { state.selectedCompId = COMPS.some(c => c.id === state.selectedCompId) ? state.selectedCompId : null; return; }

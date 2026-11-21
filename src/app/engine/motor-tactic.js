@@ -120,7 +120,7 @@ function draftSnapshotText(A, B, ourChamps) {
   return parts.length ? `<br><span style="color:var(--text-muted);">${parts.join(' ')}</span>` : '';
 }
 
-function getLiveAdvice__base(rankedComps) {
+function liveAdviceText(rankedComps) {
   const ctx = buildCtx();
   ctx.ranked = rankedComps;
   ctx.comp = pickComp(rankedComps);

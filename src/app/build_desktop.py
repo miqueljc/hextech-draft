@@ -1,4 +1,4 @@
-"""Munta pc.html: plantilla HTML + mòduls de src/app/js (en ordre) + dades de reserva de src/data."""
+"""Munta pc.html: plantilla HTML + mòduls de src/app (en l'ordre de modules.txt) + dades de reserva de src/data."""
 import os
 APP = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.dirname(APP)
@@ -20,8 +20,8 @@ def data_block():
 
 
 def build():
-    jsdir = os.path.join(APP, 'js')
-    js = ''.join(read(os.path.join(jsdir, f)) for f in sorted(os.listdir(jsdir)) if f.endswith('.js'))
+    order = [l.strip() for l in read(os.path.join(APP, 'modules.txt')).splitlines() if l.strip() and not l.startswith('#')]
+    js = ''.join(read(os.path.join(APP, f)) for f in order)
     assert js.count('/*@DATA@*/\n') == 1
     js = js.replace('/*@DATA@*/\n', data_block())
     tpl = read(os.path.join(APP, 'template.html'))
