@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hextech Draft Room — Patch 26.23 (Pro Edition)</title>
+<style>
+  :root {
+    --bg-dark: #091428;
+    --bg-panel: #0A1428;
+    --bg-card: #111F36;
+    --bg-card-hover: #172A47;
+    --gold: #C8AA6E;
+    --gold-light: #F0E6D2;
+    --gold-dark: #785A28;
+    --blue: #0AC8B9;
+    --blue-bg: rgba(10, 200, 185, 0.12);
+    --red: #E84057;
+    --red-bg: rgba(232, 64, 87, 0.12);
+    --text-main: #F0E6D2;
+    --text-muted: #A09B8C;
+    --border: #1E282D;
+    --border-gold: rgba(200, 170, 110, 0.35);
+    --green: #2ECC71;
+    --orange: #F39C12;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(circle at top, #0E223D 0%, #050B14 100%);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 16px;
+    line-height: 1.45;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: linear-gradient(90deg, rgba(17,31,54,0.95) 0%, rgba(10,20,40,0.95) 100%);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-badge {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    color: #091428;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+  }
+  h1 { font-size: 1.35rem; color: var(--gold-light); letter-spacing: 0.5px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  button, select, input {
+    font-family: inherit;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  .btn {
+    padding: 8px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-gold);
+    background: var(--bg-card);
+    color: var(--gold-light);
+    transition: all 0.15s ease;
+  }
+  .btn:hover { background: var(--bg-card-hover); border-color: var(--gold); }
+  .btn-primary {
+    background: linear-gradient(135deg, #C8AA6E 0%, #9E7E3E 100%);
+    color: #091428;
+    border: none;
+    font-weight: 700;
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-danger { border-color: rgba(232,64,87,0.5); color: #FF8A9B; }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-active-blue { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); }
+  .btn-active-red { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab-btn {
+    padding: 9px 18px;
+    background: rgba(17, 31, 54, 0.7);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 8px;
+  }
+  .tab-btn.active {
+    background: var(--bg-card);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  details.data-box { border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 10px; margin-bottom:10px; }
+  details.data-box summary { cursor:pointer; font-weight:700; color:var(--gold); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Grid Principal Draft */
+  .draft-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  @media (max-width: 1100px) {
+    .draft-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: rgba(17, 31, 54, 0.88);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(200,170,110,0.2);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.4px;
+  }
+
+  .blue-title { color: var(--blue); }
+  .red-title { color: var(--red); }
+
+  /* Bans Row */
+  .bans-container {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .ban-slot {
+    flex: 1;
+    height: 44px;
+    background: rgba(5, 11, 20, 0.7);
+    border: 1px dashed rgba(200,170,110,0.3);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-align: center;
+    padding: 2px;
+    position: relative;
+    transition: 0.15s;
+  }
+  .ban-slot:hover { border-color: var(--gold); }
+  .ban-slot.filled {
+    border-style: solid;
+    border-color: var(--red);
+    background: rgba(232, 64, 87, 0.15);
+    color: #FFB3BE;
+    font-weight: 600;
+    text-decoration: line-through;
+  }
+  .ban-slot.active-turn {
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 10px rgba(200,170,110,0.4);
+  }
+
+  /* Picks Slots */
+  .pick-slot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(5, 11, 20, 0.65);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .pick-slot:hover { border-color: var(--gold); background: rgba(23, 42, 71, 0.6); }
+  .pick-slot.active-turn {
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 12px rgba(200,170,110,0.35);
+    background: rgba(200,170,110,0.08);
+  }
+  .pick-slot.filled-blue { border-left: 4px solid var(--blue); }
+  .pick-slot.filled-red { border-right: 4px solid var(--red); }
+
+  .role-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(200,170,110,0.18);
+    color: var(--gold);
+    min-width: 38px;
+    text-align: center;
+  }
+  .champ-name { font-weight: 700; font-size: 0.92rem; }
+  .player-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+  /* Center Selector & Recommendations */
+  .turn-banner {
+    background: linear-gradient(90deg, rgba(10,200,185,0.15), rgba(200,170,110,0.2), rgba(232,64,87,0.15));
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search-bar {
+    width: 100%;
+    padding: 10px 12px;
+    background: #050B14;
+    border: 1px solid var(--border-gold);
+    color: var(--text-main);
+    margin-bottom: 10px;
+  }
+
+  .filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .pill.active {
+    background: var(--gold);
+    color: #091428;
+    font-weight: 700;
+    border-color: var(--gold);
+  }
+
+  .champ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+    gap: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 16px;
+  }
+  .champ-chip {
+    background: #0B172A;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 7px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: 0.12s;
+  }
+  .champ-chip:hover:not(.disabled) {
+    border-color: var(--gold);
+    background: #162947;
+    transform: translateY(-1px);
+  }
+  .champ-chip.disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .compbox { border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:0.8rem; line-height:1.4; }
+  .compbox.enemy { background:rgba(232,64,87,0.10); border:1px solid rgba(232,64,87,0.4); }
+  .compbox.ally { background:rgba(10,200,185,0.08); border:1px solid rgba(10,200,185,0.3); }
+  .compbox.warn2 { background:rgba(255,160,40,0.12); border:1px solid rgba(255,160,40,0.45); }
+  .compbox.item { background:rgba(200,155,60,0.08); border:1px solid rgba(200,155,60,0.3); font-size:0.76rem; }
+  #counterTip { display:none; position:fixed; z-index:9999; max-width:300px; background:#0A1428; border:1px solid var(--gold); border-radius:8px; padding:8px 10px; font-size:0.76rem; box-shadow:0 6px 24px rgba(0,0,0,.6); pointer-events:none; }
+  #counterTip .ct-head { color:var(--gold-light); margin-bottom:4px; }
+  #counterTip .ct-row { padding:4px 0; border-top:1px solid rgba(255,255,255,.08); }
+  [data-ctr] { cursor: help; }
+  .champ-chip .badges { display: flex; gap: 3px; flex-wrap: wrap; }
+  .badge-pool { font-size: 0.62rem; background: rgba(10,200,185,0.2); color: var(--blue); padding: 1px 4px; border-radius: 3px; }
+  .badge-wr { font-size: 0.62rem; background: rgba(46,204,113,0.2); color: var(--green); padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+  .badge-target { font-size: 0.62rem; background: rgba(232,64,87,0.25); color: #FF8A9B; padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+
+  /* Comps Recommendations */
+  .comp-card {
+    background: #0B172A;
+    border: 1px solid rgba(200,170,110,0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .comp-card:hover { border-color: var(--gold); }
+  .comp-card.selected-comp {
+    border: 1.5px solid var(--blue);
+    background: rgba(10,200,185,0.08);
+  }
+  .comp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .score-pill {
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(46,204,113,0.2);
+    color: var(--green);
+  }
+  .comp-champs { font-size: 0.78rem; color: var(--gold-light); margin-bottom: 4px; }
+  .comp-meta { font-size: 0.72rem; color: var(--text-muted); }
+
+  /* Scouting Box */
+  .scouting-box {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(200,170,110,0.2);
+  }
+  .scouting-input-row { display: flex; gap: 6px; margin-top: 6px; }
+  .scouting-input-row input {
+    flex: 1;
+    padding: 6px 8px;
+    background: #050B14;
+    border: 1px solid var(--border-gold);
+    color: var(--text-main);
+  }
+
+  /* Strategy Output */
+  .strategy-box {
+    margin-top: 16px;
+    background: linear-gradient(180deg, #111F36 0%, #091322 100%);
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .strat-card {
+    background: rgba(5, 11, 20, 0.7);
+    border: 1px solid rgba(200,170,110,0.22);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .strat-card h4 { color: var(--gold); margin-bottom: 6px; font-size: 0.9rem; }
+  .strat-card p, .strat-card li { font-size: 0.82rem; color: #D8D2C5; }
+  .strat-card ul { padding-left: 16px; }
+
+  /* Roster Table */
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.84rem; }
+  th, td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; }
+  th { color: var(--gold); background: rgba(5,11,20,0.6); }
+
+  .badge-rec { font-size: 0.62rem; background: rgba(200,170,110,0.28); color: var(--gold); padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+
+  .assign-cols { display:grid; grid-template-columns: 1.4fr 1fr; gap:20px; }
+  @media (max-width: 1100px) { .assign-cols { grid-template-columns: 1fr; } }
+  .assign-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .assign-row select { background: var(--bg-card); color: var(--gold-light); border:1px solid var(--border-gold); padding:5px 6px; min-width:150px; }
+  .assign-flags { display:flex; flex-wrap:wrap; gap:4px; flex:1 1 100%; }
+
+  .badge-tier { font-size: 0.62rem; background: rgba(200,170,110,0.2); color: var(--gold-light); padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+  .badge-buff { font-size: 0.62rem; background: rgba(46,204,113,0.2); color: var(--green); padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+  .badge-nerf { font-size: 0.62rem; background: rgba(232,64,87,0.25); color: #FF8A9B; padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="counterTip"></div>
+
+<header>
+  <div class="brand">
+    <span class="brand-badge">PATCH 26.23</span>
+    <h1>Hextech Draft Room</h1>
+  </div>
+  <div class="controls">
+    <div class="seg" title="El nostre costat"><button id="btnSideBlue" class="btn btn-active-blue" onclick="setOurSide('BLUE')">Som blau</button><button id="btnSideRed" class="btn" onclick="setOurSide('RED')">Som vermell</button></div>
+    <div class="seg" title="Ordre del draft"><button id="btnModeOrder" class="btn btn-active-blue" onclick="setDraftMode('ORDER')">Ordre de torneig</button><button id="btnModeFree" class="btn" onclick="setDraftMode('FREE')">Lliure</button></div>
+    <button id="btnFearless" class="btn" onclick="toggleFearless()">⚔️ Fearless: OFF</button>
+    <button class="btn btn-quiet" onclick="resetDraft()">Reinicia el draft</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('draft', this)">Draft</button>
+  <button class="tab-btn" onclick="switchTab('roster', this)">Equip i pools</button>
+  <button class="tab-btn" onclick="switchTab('comps', this)">Llibre de comps</button>
+  <button class="tab-btn" onclick="switchTab('pro', this)">Draft pro i flex</button>
+  <button class="tab-btn" id="btnTabData" onclick="switchTab('data', this)">Dades</button>
+  <button class="tab-btn" onclick="switchTab('patch', this)">Parc 26.23</button>
+</div>
+
+<!-- TAB 1: SIMULADOR -->
+<div id="tab-draft" class="tab-content active">
+  <div id="patchBanner" style="display:none;background:rgba(255,160,40,0.10);border:1px solid rgba(255,160,40,0.4);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:0.8rem;"></div>
+  <div class="draft-grid">
+    <!-- BLUE SIDE -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="blue-title">Costat blau <span id="blueTag">(NOSALTRES)</span></span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">First Pick</span>
+      </div>
+      <div class="side-lbl">Bans</div>
+      <div class="bans-container" id="blueBans"></div>
+      <div class="side-lbl">Picks</div>
+      <div id="bluePicks"></div>
+    </div>
+
+    <!-- CENTER ENGINE -->
+    <div class="panel">
+      <div class="turn-banner">
+        <div>
+          <div id="turnLabel" style="font-size:1rem;font-weight:800;">BB1 — Ban Blue Side (1)</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" onclick="undoLast()">↩️ Desfer</button>
+          <button class="btn" onclick="runWhatIf()">🔀 What-if</button>
+          <button class="btn btn-primary" onclick="generateStrategy()">⚡ Analitzar Pla de Partida</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="matchBtn" onclick="openMatchMode()">🎮 Mode partida (draft ràpid)</button>
+      <!-- Recomanacions immediates -->
+      <div id="liveAdviceBox" style="background:rgba(10,200,185,0.08);border:1px solid rgba(10,200,185,0.3);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.82rem;">
+        <strong style="color:var(--blue);">💡 Recomanació en directe:</strong>
+        <span id="liveAdviceText">Carregant anàlisi...</span>
+      </div>
+
+      <div id="compBox"></div>
+      <div id="fearlessPanel" style="display:none;"></div>
+      <div id="whatIfBox" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.8rem;"></div>
+
+      <input type="text" id="champSearch" class="search-bar" placeholder="🔍 Cerca campió (ex: Pyke, Zaahen, Kai'Sa, Malphite, Vex...)" oninput="renderChampGrid()">
+
+      <div class="filter-pills" id="roleFilters">
+        <span class="pill active" onclick="setRoleFilter('ALL', this)">Tots</span>
+        <span class="pill" onclick="setRoleFilter('REC', this)">⭐ Recomanats (torn actual)</span>
+        <span class="pill" onclick="setRoleFilter('POOL', this)">⭐ Pool Equip</span>
+        <span class="pill" onclick="setRoleFilter('OPGG', this)">🔥 Top WR Real</span>
+        <span class="pill" onclick="setRoleFilter('Top', this)">Top</span>
+        <span class="pill" onclick="setRoleFilter('Jg', this)">Jungle</span>
+        <span class="pill" onclick="setRoleFilter('Mid', this)">Mid</span>
+        <span class="pill" onclick="setRoleFilter('Bot', this)">Bot</span>
+        <span class="pill" onclick="setRoleFilter('Sup', this)">Support</span>
+      </div>
+
+      <div class="champ-grid" id="champGrid"></div>
+
+      <!-- Rànquing Composicions -->
+      <div style="font-weight:700;font-size:0.88rem;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;">
+        <span>📊 Compatibilitat de les vostres comps (en directe)</span>
+        <span style="font-size:0.72rem;color:var(--text-muted);">Clica per fixar objectiu</span>
+      </div>
+      <div id="compsRanking"></div>
+    </div>
+
+    <!-- RED SIDE + SCOUTING -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="red-title">Costat vermell <span id="redTag">(RIVAL)</span></span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">Counter Pick (R5)</span>
+      </div>
+      <div class="side-lbl">Bans</div>
+      <div class="bans-container" id="redBans"></div>
+      <div class="side-lbl">Picks</div>
+      <div id="redPicks"></div>
+
+      <div class="scouting-box">
+        <div style="font-size:0.8rem;font-weight:700;color:#FF8A9B;">🎯 Scouting Rival (Target Bans)</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);">Afegeix OTPs o mains perillosos del rival (separats per coma):</div>
+        <div class="scouting-input-row">
+          <input type="text" id="enemyOtpInput" placeholder="Ex: Katarina, Yasuo, Draven" value="">
+          <button class="btn" onclick="updateEnemyOtps()">Aplicar</button>
+        </div>
+        <div id="enemyOtpBadges" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+        <div id="scoutPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSIGNACIÓ DE ROLS -->
+  <div id="assignSection" class="panel" style="margin-top:16px;">
+    <div class="panel-header">
+      <span>🧩 Assignació de rols: jugador + rol + pick</span>
+      <button class="btn" onclick="autoAssignClick()">🪄 Auto-assignar</button>
+    </div>
+    <p id="assignHint" style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;"></p>
+    <div class="assign-cols">
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--blue);margin-bottom:6px;">NOSALTRES</div>
+        <div id="assignRows"></div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:#FF8A9B;margin-bottom:6px;">RIVAL (rols probables)</div>
+        <div id="enemyRoleRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLA DE PARTIDA GENERAT -->
+  <div id="strategySection" class="strategy-box" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <span class="brand-badge">INFORME TÀCTIC POST-DRAFT</span>
+        <h3 id="stratTitle" style="color:var(--gold-light);margin-top:4px;">Pla de Partida — Composició Seleccionada</h3>
+      </div>
+      <button class="btn btn-primary" onclick="copyDiscordPlan()">📋 Copiar Pla per a Discord</button>
+    </div>
+    <div class="strategy-grid" id="strategyContent"></div>
+  </div>
+</div>
+
+<!-- TAB 2: ROSTER & WINRATES REALS -->
+<div id="tab-roster" class="tab-content">
+  <div class="panel">
+    <div class="panel-header">
+      <span>👥 Jugadors, Rols i Dades Reals (Contrast Draft.xlsx vs OP.GG / Porofessor S2026)</span>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">
+      El motor dona prioritat extra als campions on teniu alt volum i winrate positiu demostrat en SoloQ aquesta temporada.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Jugador</th>
+          <th>Rol Torneig</th>
+          <th>Mains Excel (Draft.xlsx)</th>
+          <th>Dades Reals Destacades (OP.GG / Porofessor)</th>
+          <th>Pool Ampliat Disponible</th>
+        </tr>
+      </thead>
+      <tbody id="rosterTableBody"></tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><span>✏️ Editor de rols i pools per rol (jugadors multi-rol)</span></div>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">
+      Cada jugador pot tenir diversos rols, cadascun amb els seus campions (separats per comes). Deixa un rol buit si no el juga. Es desa al navegador i regenera les composicions automàtiques.
+    </p>
+    <div id="roleEditor"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-primary" onclick="saveRolePools()">💾 Desa i regenera comps</button>
+      <button class="btn" onclick="resetRolePools()">↺ Valors per defecte</button>
+      <span id="roleEditorMsg" style="font-size:0.76rem;color:var(--text-muted);"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: LLIBRE DE COMPOSICIONS -->
+<div id="tab-comps" class="tab-content">
+  <div class="panel">
+    <div class="panel-header">
+      <span id="compsTitle">📚 Composicions</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Estil / Comentaris</th>
+          <th>Top / Jg / Mid / Bot / Sup (jugador)</th>
+          <th>Bona contra</th>
+          <th>Dolenta contra</th>
+          <th>Bans recomanats</th>
+        </tr>
+      </thead>
+      <tbody id="compsTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB: DADES I EDITORS -->
+<div id="tab-data" class="tab-content">
+  <div class="panel">
+    <div class="panel-header"><span>🛠️ Dades i Editors</span></div>
+    <div id="sharedStatus" style="font-size:0.8rem;margin:8px 0;padding:8px 10px;border:1px solid rgba(200,155,60,.4);border-radius:8px;background:rgba(10,20,40,.6);"></div>
+    <div style="margin-bottom:10px;"><button class="btn" onclick="exportLocal()">📋 Copia les meves dades locals</button> <small style="color:var(--text-muted);">per enviar-les a l'administrador i que les pugi a les dades compartides</small></div>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">Tot el que canvieu aquí es desa al navegador i recalcula recomanacions, comps i anàlisi. Cada editor té un botó per tornar als valors per defecte.</p>
+    <details open class="data-box"><summary>1. Importar winrates reals (op.gg)</summary><div id="opggImport"></div></details>
+    <details class="data-box"><summary>2a. Counters de lane (campió &gt; campions als quals guanya la línia)</summary>
+      <textarea id="countersText" class="search-bar" style="width:100%;min-height:160px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveCounters()">💾 Desa</button><button class="btn" onclick="resetCounters()">↺ Per defecte</button><span id="countersMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Malphite &gt; Yasuo, Yone, Fiora</code> (una línia per campió).</div></details>
+    <details class="data-box"><summary>2a-bis. Counters externs (enemic &gt; els seus millors counters, p. ex. d'u.gg / Lolalytics / metabot)</summary>
+      <textarea id="extText" class="search-bar" style="width:100%;min-height:140px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveExt()">💾 Desa</button><button class="btn" onclick="resetExt()">↺ Per defecte</button><span id="extMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Katarina &gt; Diana, Vladimir, Malphite</code>. Surten al tooltip en passar el ratolí per un pick rival i pesen a les recomanacions. Els campions sense dades usen el motor estructural (etiquetes).</div></details>
+    <details class="data-box"><summary>2b. Sinergies (parelles amb bonus a les comps generades i als bans/prediccions)</summary>
+      <textarea id="synergyText" class="search-bar" style="width:100%;min-height:140px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveSynergy()">💾 Desa i regenera comps</button><button class="btn" onclick="resetSynergy()">↺ Per defecte</button><span id="synergyMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Orianna + Jarvan IV : 8</code> (bonus 1-12, per defecte 5).</div></details>
+    <details class="data-box"><summary>3. Tier list del parc</summary>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><label style="font-size:0.78rem;">Parc de la tier list:</label><input id="tierSource" class="search-bar" style="margin:0;width:110px;"></div>
+      <textarea id="tierText" class="search-bar" style="width:100%;min-height:200px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveTier()">💾 Desa</button><button class="btn" onclick="resetTier()">↺ Tier list del 26.23</button><span id="tierMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Top S+: Darius, Sett</code>, <code>Jg S: Vi, Wukong</code>... (rols Top/Jg/Mid/Bot/Sup; tiers S+/S/A). Enganxa'n una de nova (p. ex. de METAsrc o op.gg) per al parc actual.</div></details>
+    <details class="data-box"><summary>4. Etiquetes i rols dels campions</summary>
+      <input type="text" id="tagChamp" list="champList" class="search-bar" placeholder="Campió (ex: Galio)" onchange="loadTagChamp()" oninput="loadTagChamp()">
+      <datalist id="champList"></datalist>
+      <div id="tagBoxes"></div>
+      <div id="tagMsg" style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;"></div>
+      <div id="tagOverrides" style="font-size:0.76rem;margin-top:4px;"></div></details>
+  </div>
+</div>
+
+<!-- TAB: DRAFT PRO -->
+<div id="tab-pro" class="tab-content">
+  <div class="panel" id="playerSheets"></div>
+  <div class="panel" id="proContent"></div>
+</div>
+
+<!-- TAB 4: CONTEXT DEL PARC -->
+<div id="tab-patch" class="tab-content">
+  <div class="panel" id="patchContent"></div>
+</div>
+
+<script>/*@APP@*/</script>
+</body>
+</html>

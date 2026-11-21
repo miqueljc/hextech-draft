@@ -1,7 +1,7 @@
 import re
 import os
 S=os.path.dirname(os.path.abspath(__file__))+'/'
-ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/'
+ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))+'/'
 src=open(ROOT+'pc.html',encoding='utf-8').read()
 css=src[src.index('<style>')+7:src.index('</style>')]
 script=src[src.index('<script>')+8:src.rindex('</script>')]
@@ -175,7 +175,7 @@ try{ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) nav
   switchTab('draft');
 })();
 '''
-script=script.replace('\ninit();\n','\ninit();\n'+open(S+'blocks/blockM.js',encoding='utf-8').read()+tail,1)
+script=script.replace('\ninit();\n','\ninit();\n'+open(S+'blockM.js',encoding='utf-8').read()+tail,1)
 assert 'showSharedView(d);return' in script
 html='<!DOCTYPE html>\n<html lang="ca">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#091428">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<title>Hextech Draft Mobile 26.23</title>\n<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icon-192.png">\n<link rel="apple-touch-icon" href="icon-192.png">\n<meta name="apple-mobile-web-app-title" content="Hextech Draft">\n<style>'+css+mobile_css+'</style>\n</head>\n<body>\n'+shell_top+draft_main+tab_analysis+tab_me+others+'</main>\n'+more_sheet+'<script>'+script+'</script>\n</body>\n</html>\n'
 open(ROOT+'index.html','w',encoding='utf-8').write(html)

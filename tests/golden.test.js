@@ -20,6 +20,9 @@ function capture([g0, n, seed0]) {
   const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const pickFrom = (list, k) => { const c = list.slice(0, k); return c.length ? c[Math.floor(rnd() * c.length)] : null; };
   const r1 = x => Math.round(x * 10) / 10;
+  const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + ':' + str.length; };
+  const html = id => { const e = document.getElementById(id); return e ? hash(e.innerHTML) : null; };
+  const bodyHtml = () => hash([...document.body.children].filter(e => e.tagName !== 'SCRIPT').map(e => e.outerHTML).join(''));
   const recs = list => list.slice(0, 12).map(r => [r.champ, r1(r.score !== undefined ? r.score : r.prob * 100), (r.why || []).map(w => r1(w.pts) + ' ' + w.txt).join(' | ')]);
   const out = [];
   for (let g = g0; g < g0 + n; g++) {
@@ -35,9 +38,11 @@ function capture([g0, n, seed0]) {
       else if (ours) { list = recommendBans(ctx); choice = pickFrom(list.filter(r => !unav.has(r.champ)), 4); }
       else { list = predictEnemy(ctx); choice = pickFrom(list.filter(r => !unav.has(r.champ)), 6); }
       if (!choice) { const free = ALL_CHAMPS.filter(c => !unav.has(c)); choice = { champ: free[Math.floor(rnd() * free.length)] }; }
-      turns.push([st.side[0] + st.type[0] + st.index, recs(list), choice.champ]);
+      turns.push([st.side[0] + st.type[0] + st.index, recs(list), choice.champ, html('liveAdviceBox'), bodyHtml()]);
       pickChampion(choice.champ);
     }
+    generateStrategy();
+    const ui = { strategy: html('strategyContent'), body: bodyHtml() };
     const s = buildStrategy();
     const lanes = s.lanes.map(l => {
       const b = l.build || {};
@@ -51,7 +56,7 @@ function capture([g0, n, seed0]) {
       threats: (s.threats || []).map(t => t.champ + ': ' + t.txt),
       individual: (s.individual || []).map(x => x.role + ': ' + x.text),
       phases: s.phasePlan ? (s.phasePlan.phases || []).map(f => f.time + ' ' + f.title + ': ' + f.text) : null,
-      win: s.win, laneSummary: s.laneSummary
+      win: s.win, laneSummary: s.laneSummary, ui
     });
   }
   return { out, seed };
