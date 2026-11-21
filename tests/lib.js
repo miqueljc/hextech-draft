@@ -24,6 +24,7 @@ async function openPage(file, opts = {}) {
   await page.route(/^https:\/\/(?!ddragon)/, r => r.abort());
   await page.route('**/data.json*', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body }));
   await page.route('https://ddragon.leagueoflegends.com/**', r => { const jpg = r.request().url().endsWith('.jpg'); r.fulfill({ status: 200, contentType: jpg ? 'image/jpeg' : 'image/png', body: fs.readFileSync(path.join(FIX, jpg ? 'fakeload.jpg' : 'fakeicon.png')) }); });
+  if (opts.before) await opts.before(page);
   await page.goto('file://' + file);
   await page.waitForTimeout(1200);
   return { browser, page, errors };

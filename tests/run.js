@@ -3,7 +3,8 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const runs = [
   ['engine_draft.test.js'], ['engine_strategy.test.js'], ['builds.test.js'],
-  ['learning.test.js'], ['match.test.js'], ['match.test.js', 'mobile']
+  ['learning.test.js'], ['match.test.js'], ['match.test.js', 'mobile'],
+  ['golden.test.js'], ['golden.test.js', 'mobile']
 ];
 let failed = 0;
 const t0 = Date.now();
