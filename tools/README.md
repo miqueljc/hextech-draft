@@ -24,3 +24,27 @@ La app llegeix les fitxes de rivals de `data.json` i les ofereix al selector **�
 - Es guarden els 12 campions amb més partides (mínim 2) per jugador.
 - Els noms de campió es normalitzen amb `tools/champions.json` (noms de l'app + àlies com `Dr. Mundo`).
 - Tornar a executar l'script amb el mateix `id` substitueix la fitxa anterior.
+
+## Builds reals i OP picks del parc (`hextech_builds_v1`, `hextech_oppicks_v1`)
+
+La pestanya d'anàlisi agafa la base de cada build (runes, fragments, summoners, inici, botes i 3 objectes core) de `hextech_builds_v1`; si no hi ha connexió, fa servir la còpia que porta l'app.
+
+1. Per a cada campió i rol, obrir `https://op.gg/lol/champions/<campió>/build/<rol>` (rols: `top`, `jungle`, `mid`, `adc`, `support`) i apuntar la build més jugada.
+2. Muntar `builds.json` (format detallat a la capçalera de `tools/update_builds.mjs`).
+3. `node tools/update_builds.mjs builds.json --dry` per validar (comprova que les runes existeixen i són de files compatibles) i després sense `--dry`.
+4. Per als OP picks: `node tools/update_builds.mjs --oppicks op.json` amb `{ "patch": "26.24", "source": "Skill Capped", "roles": { "Top": [...], ... } }`.
+
+## Matchups d'un parc nou (`hextech_matchups_v1`)
+
+1. Per a cada campió, obrir `https://metabot.gg/en/league/champion/<campió>/counters` i comprovar que mostra el parc nou.
+2. Desar a una carpeta un fitxer `<Campió>.txt` amb el winrate **del campió** contra cada rival: `Dr. Mundo 38.5% 122, Renekton 40.8% 76, ...`
+3. `node tools/merge_matchups.mjs carpeta --dry` i després sense `--dry`. Les dades noves pesen 1 i les antigues 0,5.
+
+## Historial compartit (`hextech_history_v1`)
+
+Cada dispositiu desa els seus drafts amb resultat. Per compartir-los amb tot l'equip:
+
+1. A l'app: pestanya Dades → «📋 Copia l'historial» i enganxar-ho en un fitxer `historial.json`.
+2. `node tools/update_history.mjs historial.json` (fusiona sense duplicats; es poden passar diversos fitxers).
+
+El motor fa servir l'historial compartit + el local per valorar cada jugador amb cada campió i les parelles de campions que heu jugat juntes.
