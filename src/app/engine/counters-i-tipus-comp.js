@@ -1,11 +1,7 @@
 // ================= COUNTERS PER CAMPIÓ, TIPUS DE COMPOSICIÓ I PICKS EN SINTONIA =================
 // Dades externes: enemic > els seus millors counters (rol de lane). Editable a Dades i Editors (2c).
-const EXT_DEFAULT = {
-  'Katarina': ['Diana', 'Vladimir', 'Malphite', 'Annie', 'Naafiri'],
-  'Nocturne': ['Lillia', 'Rammus', 'Wukong', 'Shyvana', 'Nasus', "Kha'Zix", 'Evelynn'],
-  'Lissandra': ['Zoe', "Vel'Koz", "Kog'Maw", 'Qiyana', 'Pantheon'],
-  'Yasuo': ['Malzahar', 'Taliyah', 'Lissandra', 'Yone', 'Zed', 'Pantheon']
-};
+// counters ampliats: de fàbrica = data.json (hextech_extcounters_v1), injectat al muntatge
+const EXT_DEFAULT = EXT_COUNTERS_DEFAULT;
 const EXT_SRC = {
   'Katarina': 'u.gg + LoLTheory (Mid)', 'Nocturne': 'nerfplz 26.19 (Jungla)',
   'Lissandra': 'Lolalytics 16.22 (Mid)', 'Yasuo': 'metabot.gg 26.22 + Skill-Capped (Mid)'

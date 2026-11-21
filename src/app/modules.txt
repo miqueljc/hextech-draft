@@ -1,5 +1,6 @@
 # Ordre de càrrega dels mòduls (importa: el codi de primer nivell s'executa en aquest ordre)
 # Les línies amb @escriptori o @mobil només entren en aquesta versió; la resta, a totes dues.
+data/defaults.js
 data/roster-i-comps.js
 engine/estat-draft.js
 ui/accions-draft.js
@@ -30,7 +31,6 @@ ui/counters.js
 plan/pla-de-linia.js
 engine/sinergies-adc.js
 builds/personalitzacio.js
-data/defaults.js
 data/cataleg-campions.js
 ui/icones-campions.js
 engine/winrates-reals.js

@@ -16,7 +16,7 @@ function captureDefaults() {
   DEFAULTS.tags = {};
   Object.keys(CHAMP_DATA).forEach(c => { DEFAULTS.tags[c] = { roles: [...CHAMP_DATA[c].roles], tags: [...CHAMP_DATA[c].tags] }; });
   DEFAULTS.highlights = ROSTER.map(p => p.opggHighlights.map(h => ({ ...h })));
-  PATCH_META.tierSource = '26.23';
+  PATCH_META.tierSource = TIER_SOURCE_DEFAULT;
 }
 // ---- Resolució de noms de campió (tolerant: majúscules, apòstrofs, àlies) ----
 let _nameMap = null;
@@ -185,7 +185,7 @@ function applyTierOverride() {
     const clean = { T: {}, J: {}, M: {}, B: {}, S: {} };
     Object.keys(clean).forEach(L => ['S+', 'S', 'A'].forEach(k => { clean[L][k] = ((t.raw[L] || {})[k] || []).filter(c => CHAMP_SET.has(c)); }));
     rebuildPatchTier(clean, t.source || 'manual');
-  } else rebuildPatchTier(JSON.parse(JSON.stringify(DEFAULTS.tier)), '26.23');
+  } else rebuildPatchTier(JSON.parse(JSON.stringify(DEFAULTS.tier)), TIER_SOURCE_DEFAULT);
 }
 function parseEsDate(s) { const m = String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
 // ---- 4. Editor d'etiquetes i rols dels campions ----

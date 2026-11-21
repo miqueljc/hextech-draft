@@ -6,33 +6,8 @@ const PATCH_META = {
   tierNote: 'Tier list del 26.23 (Skill Capped, Emerald+): OP → S+, S i A. Els campions que no hi surten són B o inferior.'
 };
 
-const TIER_RAW = {
-  T: {
-    'S+': ["Malphite", "Ornn"],
-    'S': ["Camille", "Darius", "Fiora", "Gangplank", "Garen", "Mordekaiser", "Olaf", "Pantheon", "Sett", "Shen", "Teemo", "Zaahen"],
-    'A': ["Aatrox", "Akali", "Doctor Mundo", "Gwen", "Irelia", "Renekton", "Sion", "Volibear"]
-  },
-  J: {
-    'S+': ["Cho'Gath", "Lillia"],
-    'S': ["Briar", "Ekko", "Shyvana", "Taliyah", "Wukong"],
-    'A': ["Diana", "Graves", "Hecarim", "Jarvan IV", "Kayn", "Master Yi", "Naafiri", "Shaco", "Sylas", "Talon", "Vi", "Viego"]
-  },
-  M: {
-    'S+': ["Ekko", "Heimerdinger", "Veigar", "Vex"],
-    'S': ["Ahri", "Diana", "Fizz", "Hwei", "Katarina", "Lissandra", "Malzahar", "Twisted Fate", "Vladimir", "Xerath"],
-    'A': ["Galio", "Kassadin", "LeBlanc", "Lux", "Yasuo", "Yone"]
-  },
-  B: {
-    'S+': ["Xayah"],
-    'S': ["Jinx", "Miss Fortune", "Smolder", "Twitch", "Zeri"],
-    'A': ["Aphelios", "Corki", "Jhin", "Kai'Sa", "Samira", "Sivir", "Tristana"]
-  },
-  S: {
-    'S+': ["Braum", "Leona", "Rell"],
-    'S': ["Alistar", "Blitzcrank", "Janna", "Nami", "Rakan", "Senna", "Sona", "Soraka", "Thresh", "Vel'Koz"],
-    'A': ["Bard", "Lulu", "Lux", "Milio", "Morgana", "Nautilus", "Seraphine"]
-  }
-};
+// tier list: de fàbrica = data.json (hextech_tier_v1), injectat al muntatge
+const TIER_RAW = JSON.parse(JSON.stringify(TIER_DEFAULT));
 const TIER_PTS = { 'S+': 10, 'S': 6, 'A': 2 };
 const PATCH_TIER = {};
 Object.entries(TIER_RAW).forEach(([letter, tiers]) => Object.entries(tiers).forEach(([tier, list]) => list.forEach(c => {

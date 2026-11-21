@@ -2,6 +2,9 @@
 const REAL_SRC = 'metabot.gg 26.19–26.22';
 let MATCHUPS = MATCHUPS_DEFAULT, DUO_WR = DUOWR_DEFAULT, ROLE_RATES = ROLE_RATES_DEFAULT;
 let _cby = new Map(), _reactive = null;
+// Picks reactius (es trien per castigar el rival, no a cegues): la llista curada original. Abans sortia de les claus
+// dels counters de fàbrica; ara que els counters de fàbrica són les edicions de l'equip, la llista queda fixada aquí.
+const REACTIVE_PICKS = ['Malphite', 'Poppy', 'Shen', 'Teemo', 'Vex', 'Galio', 'Leona', 'Nautilus', 'Pyke', 'Morgana'];
 function loadRealData() {
   const m = lsGet('hextech_matchups_v1'), d = lsGet('hextech_duowr_v1'), r = lsGet('hextech_rolerates_v1');
   MATCHUPS = (m && typeof m === 'object') ? m : MATCHUPS_DEFAULT;
@@ -39,7 +42,7 @@ function synScore(a, b) {
 // Reactius de veritat: la llista curada original (Malphite, Poppy, Pyke...), no tots els campions amb dades
 function blindWeakness(c) { const un = getUnavailableChamps(); return counteredBy(c).filter(e => !un.has(e)).length; }
 function isReactive(c) {
-  if (!_reactive) _reactive = new Set(Object.keys((DEFAULTS && DEFAULTS.counters) || {}));
+  if (!_reactive) _reactive = new Set(REACTIVE_PICKS);
   return _reactive.has(c);
 }
 

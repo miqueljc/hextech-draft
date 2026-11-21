@@ -127,13 +127,8 @@ EXT_SYN_TEXT.trim().split('\n').forEach(l => {
   EXT_SYN_PAIRS.push([a, b, w]); SYN_SRC[synKey(a, b)] = src;
 });
 
-const SYNERGY_PAIRS = [
-  ['Orianna', 'Jarvan IV', 8], ['Jarvan IV', 'Miss Fortune', 8], ['Renata Glasc', 'Kalista', 8],
-  ['Nautilus', 'Miss Fortune', 6], ['Leona', "Kai'Sa", 6], ['Malphite', 'Yasuo', 6], ['Malphite', 'Orianna', 6],
-  ['Malphite', 'Miss Fortune', 5], ['Zac', 'Miss Fortune', 5], ['Amumu', 'Miss Fortune', 6], ['Rell', 'Miss Fortune', 5],
-  ['Braum', 'Jinx', 5], ['Braum', 'Caitlyn', 5], ['Lulu', 'Jinx', 5], ['Milio', "Kai'Sa", 5], ['Nami', "Kai'Sa", 5],
-  ['Thresh', 'Caitlyn', 4], ['Karthus', 'Nautilus', 6], ['Karthus', 'Leona', 6], ['Rumble', 'Nautilus', 7], ['Rumble', 'Leona', 5], ['Rumble', 'Jarvan IV', 5], ['Viktor', 'Jarvan IV', 4], ['Lulu', 'Olaf', 6], ['Lulu', 'Xin Zhao', 6], ['Lulu', "Kog'Maw", 6], ['Gwen', "Kog'Maw", 5], ['Gwen', 'Lulu', 5], ['Nocturne', 'Orianna', 7], ['Samira', 'Nautilus', 5], ['Samira', 'Leona', 5], ['Nautilus', "Kai'Sa", 4], ['Galio', 'Yasuo', 4], ['Sejuani', 'Miss Fortune', 4], ['Vi', 'Vex', 4]
-];
+// sinergies: de fàbrica = data.json (hextech_synergy_v1), injectat al muntatge
+const SYNERGY_PAIRS = SYNERGY_DEFAULT.map(x => [...x]);
 EXT_SYN_PAIRS.forEach(([a, b, w]) => { if (!SYNERGY_PAIRS.some(([x, y]) => (x === a && y === b) || (x === b && y === a))) SYNERGY_PAIRS.push([a, b, w]); });
 const GEN_ARCH = [
   { key: 'engage', name: 'Engage i Wombo Combo', style: 'Engage dur, frontline i combos AoE', w: { eng: 5, front: 3, combo: 4, peel: 1 }, need: { eng: 2, front: 2 },

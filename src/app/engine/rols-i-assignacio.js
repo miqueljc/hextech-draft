@@ -47,9 +47,11 @@ function applyRolePools() {
   saved = lsGet(ROLEPOOL_LS_KEY);
   ROSTER.forEach((pl, i) => {
     if (!pl.basePool) pl.basePool = [...pl.pool];
+    // de fàbrica: els pools de data.json (ROLEPOOLS_DEFAULT, injectat al muntatge); si no n'hi ha, es dedueixen del pool base
+    const factory = ROLEPOOLS_DEFAULT[i] ? sanitizeRolePools(ROLEPOOLS_DEFAULT[i]) : null;
     const custom = saved && saved[i] ? sanitizeRolePools(saved[i]) : null;
-    pl.custom = Boolean(custom && Object.keys(custom).length);
-    pl.rolePools = pl.custom ? custom : deriveRolePools(pl.role, pl.basePool, pl);
+    pl.custom = Boolean(custom && Object.keys(custom).length && JSON.stringify(custom) !== JSON.stringify(factory));
+    pl.rolePools = custom && Object.keys(custom).length ? custom : factory && Object.keys(factory).length ? factory : deriveRolePools(pl.role, pl.basePool, pl);
     if (!pl.rolePools[pl.role]) pl.rolePools[pl.role] = [];
     pl.pool = [...new Set(Object.values(pl.rolePools).flat())];
   });

@@ -46,6 +46,14 @@ FROM_DATA_JSON = [
     ('REAL_BUILDS_DEFAULT', 'hextech_builds_v1', 'builds'),
     ('REAL_BUILDS_PATCH_DEFAULT', 'hextech_builds_v1', 'patch'),
     ('REAL_BUILDS_SRC_DEFAULT', 'hextech_builds_v1', 'source'),
+    # valors de fàbrica (els que restaura el botó de restaurar): les darreres edicions de l'equip
+    ('COUNTERS_DEFAULT', 'hextech_counters_v1', None),
+    ('EXT_COUNTERS_DEFAULT', 'hextech_extcounters_v1', None),
+    ('SYNERGY_DEFAULT', 'hextech_synergy_v1', None),
+    ('TIER_DEFAULT', 'hextech_tier_v1', 'raw'),
+    ('TIER_SOURCE_DEFAULT', 'hextech_tier_v1', 'source'),
+    ('ROLEPOOLS_DEFAULT', 'hextech_rolepools_v1', None),
+    ('TEAMROLES_DEFAULT', 'hextech_teamroles_v1', None),
 ]
 
 

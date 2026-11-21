@@ -1,6 +1,6 @@
 // ===== rols-viables (estat i lògica, separat de ui/filtres.js) =====
 let TEAM_ROLES = {};
-function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : {}; }
+function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : JSON.parse(JSON.stringify(TEAMROLES_DEFAULT)); }
 loadTeamRoles();
 function viableRoles(c) {
   const pub = champRoles(c), extra = (TEAM_ROLES[c] || []).filter(r => ROLE_ORDER.includes(r));

@@ -23,7 +23,7 @@ Assistent de draft de League of Legends per a l'equip. Funciona com una sola pà
 | `src/app/ui/plataforma-escriptori.js` | Peces pròpies de l'escriptori (pestanyes, copiar el pla, baixar a l'informe) |
 | `src/mobile/` | Peces pròpies del mòbil: plantilla (`mobil.html`, barra inferior i fulls), estils extra, navegació, "El meu joc", compartir i arrencada |
 | `src/data/ddcat.json` | Catàleg d'icones de Data Dragon (per quan no hi ha connexió) |
-| `data.json` | **Única font** de les dades compartides (pools, matchups, builds, rivals, historial...). L'app la descarrega en obrir-se, i el muntatge n'enganxa una còpia a `pc.html`/`index.html` per quan no hi ha connexió |
+| `data.json` | **Única font** de les dades compartides (pools, matchups, builds, rivals, historial...). L'app la descarrega en obrir-se, i el muntatge n'enganxa una còpia a `pc.html`/`index.html` per quan no hi ha connexió. També són els valors **de fàbrica**: el que restauren els botons de restaurar (counters, sinergies, tier list, pools...) |
 | `tools/` | Eines per actualitzar `data.json` (vegeu `tools/README.md`) |
 | `tests/` | Proves automàtiques (inclosa la de referència, `tests/golden`) |
 

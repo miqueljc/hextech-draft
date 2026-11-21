@@ -192,18 +192,8 @@ const ROLE_LETTER = { Top: 'T', Jg: 'J', Mid: 'M', Bot: 'B', Sup: 'S' };
 })();
 
 // Counters de lane coneguts (campió -> campions als quals guanya la línia). Heurístic i editable.
-const LANE_COUNTERS = {
-  'Malphite': ['Yasuo', 'Yone', 'Tryndamere', 'Fiora', 'Jax', 'Master Yi', 'Riven', 'Camille'],
-  'Poppy': ['Yasuo', 'Yone', 'Camille', 'Riven', 'Irelia', 'Fiora', 'Hecarim', 'Kayn', 'Katarina', 'Zed', 'Fizz', 'Akali'],
-  'Shen': ['Fiora', 'Tryndamere', 'Jax', 'Yasuo', 'Master Yi'],
-  'Teemo': ['Fiora', 'Tryndamere', 'Jax', 'Master Yi'],
-  'Vex': ['Yasuo', 'Yone', 'Zed', 'Fizz', 'Kassadin', 'Akali', 'Katarina'],
-  'Galio': ['Katarina', 'Akali', 'Fizz', 'LeBlanc', 'Kassadin'],
-  'Leona': ['Soraka', 'Sona', 'Janna', 'Lulu', 'Yuumi', 'Nami', 'Karma'],
-  'Nautilus': ['Soraka', 'Sona', 'Janna', 'Lulu', 'Yuumi', 'Nami', 'Karma', 'Zyra', 'Lux'],
-  'Pyke': ['Soraka', 'Sona', 'Yuumi', 'Lux', 'Zyra', 'Brand', 'Xerath', "Vel'Koz", 'Zilean'],
-  'Morgana': ['Blitzcrank', 'Nautilus', 'Leona', 'Thresh', 'Pyke', 'Rell']
-};
+// counters de línia: de fàbrica = data.json (hextech_counters_v1), injectat al muntatge
+const LANE_COUNTERS = JSON.parse(JSON.stringify(COUNTERS_DEFAULT));
 
 // Conceptes que apareixen a goodAgainst / badAgainst de les comps, avaluats contra el draft rival real
 const CONCEPTS = {
