@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#091428">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Hextech Draft Mobile 26.23</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Hextech Draft">
+<style>{{estils}}{{estils_mobil}}</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div><span class="brand-badge">PATCH 26.23</span><h1>HEXTECH DRAFT</h1></div>
+  <button class="appbar-btn" aria-label="Opcions" onclick="toggleSheet('sheetOpts')">⚙️</button>
+</div>
+<main>
+<p class="hint">💡 Mantén premut un campió (llista o picks) per veure els seus counters i sinergies.</p>
+{{draft}}</div>
+<div id="tab-analysis" class="tab-content">
+{{analisi}}
+</div>
+<div id="tab-me" class="tab-content"><div id="meChips" class="mchips"></div><div id="meContent"></div></div>
+{{pestanyes}}</main>
+
+<div id="overlay" class="overlay" onclick="closeSheets()"></div>
+<div id="sheetOpts" class="sheet">
+  <h3>⚙️ Opcions del draft</h3>
+  <div class="row2">
+    <button id="btnSideBlue" class="btn btn-active-blue" onclick="setOurSide('BLUE')">🔵 Blue side</button>
+    <button id="btnSideRed" class="btn" onclick="setOurSide('RED')">🔴 Red side</button>
+    <button id="btnModeOrder" class="btn btn-active-blue" onclick="setDraftMode('ORDER')">📋 Ordre torneig</button>
+    <button id="btnModeFree" class="btn" onclick="setDraftMode('FREE')">🖱️ Mode lliure</button>
+  </div>
+  <button id="btnFearless" class="btn" onclick="toggleFearless()">⚔️ Fearless: OFF</button>
+  <button class="btn btn-danger" onclick="if(confirm('Reiniciar el draft?')){resetDraft();closeSheets();}">🔄 Reiniciar draft</button>
+</div>
+<div id="sheetMore" class="sheet">
+  <h3>Més seccions</h3>
+  <button class="btn" onclick="switchTab('roster')">👥 Roster, pools i op.gg</button>
+  <button class="btn" onclick="switchTab('comps')">📚 Llibre de composicions</button>
+  <button class="btn" onclick="switchTab('pro')">🧠 Draft pro, flex i jugadors</button>
+  <button class="btn" onclick="switchTab('data')">🛠️ Dades i editors</button>
+  <button class="btn" onclick="switchTab('patch')">📈 Parc 26.23</button>
+</div>
+<div id="sheetTip" class="sheet"><h3>Counters i sinergies</h3><div id="tipBody"></div></div>
+<div id="toast" class="toast"></div>
+<nav class="bottomnav">
+  <button class="nav-btn active" data-tab="draft" onclick="switchTab('draft')"><span>🎯</span>Draft</button>
+  <button class="nav-btn" data-tab="analysis" onclick="switchTab('analysis')"><span>🧩</span>Anàlisi</button>
+  <button class="nav-btn" data-tab="me" onclick="switchTab('me')"><span>🎮</span>El meu joc</button>
+  <button class="nav-btn" data-tab="more" onclick="toggleSheet('sheetMore')"><span>☰</span>Més</button>
+</nav>
+<script>{{app}}</script>
+</body>
+</html>

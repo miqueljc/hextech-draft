@@ -1050,12 +1050,6 @@ document.addEventListener('click', e => {
   const chip = e.target.closest('.champ-chip');
   if (chip && chip.dataset.champ) pickChampion(chip.dataset.champ);
 });
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
-  btn.classList.add('active');
-}
 function setOurSide(side) {
   state.ourSide = side;
   document.getElementById('btnSideBlue').className = side === 'BLUE' ? 'btn btn-active-blue' : 'btn';
@@ -2831,12 +2825,6 @@ function renderPatchBanner() {
   el.style.display = msgs.length ? 'block' : 'none';
   el.innerHTML = msgs.length ? `⚠️ ${msgs.join(' ')} Actualitza-la a <a href="#" onclick="openDataTab();return false;" style="color:var(--blue);">Dades i Editors</a>.` : '';
 }
-function openDataTab() {
-  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-  const t = document.getElementById('tab-data'); if (t) t.classList.add('active');
-  const b = document.getElementById('btnTabData'); if (b) b.classList.add('active');
-}
 
 function loadTagChamp() {
   const c = canonChamp(document.getElementById('tagChamp').value);
@@ -3562,7 +3550,7 @@ function generateStrategy() {
 
   const sec = document.getElementById('strategySection');
   sec.style.display = 'block';
-  sec.scrollIntoView({ behavior: 'smooth' });
+  showStrategySection(sec);
 }
 function renderRosterTable() {
   document.getElementById('rosterTableBody').innerHTML = ROSTER.map((p, pi) => `
@@ -6184,15 +6172,9 @@ function copyDiscordPlan() {
 // --- 5. Historial: indica quantes partides venen de l'equip (compartides) ---
 
 
-// ===== Pantalla: aprenentatge (separat del motor) =====
+// ===== Arrencada: primer pintat de l'app =====
 init();
-// Escriptori: porta-retalls i avís. El mòbil la substitueix pel full de compartir del sistema.
-function deliverPlanText(out, nParts) {
-  const done = () => alert(nParts > 1
-    ? `✅ Pla copiat en ${nParts} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
-    : '✅ Pla de partida copiat al porta-retalls llest per enganxar a Discord!');
-  try { navigator.clipboard.writeText(out).then(done, done); } catch (e) { done(); }
-}
+// ===== Pantalla: aprenentatge (separat del motor) =====
 // ===== Dades compartides (data.json a GitHub): manen sobre les dades locals =====
 const SHARED_URL = 'https://miqueljc.github.io/hextech-draft/data.json';
 const SHARED_CACHE = 'hextech_shared_cache_v1';
@@ -6372,6 +6354,28 @@ function duoHtml(title, rA, rB) {
   const l = duoSuggestions(rA, rB, 6);
   return `<div style="margin-bottom:10px;"><strong style="color:var(--gold);">${title}</strong><ul style="margin-top:4px;font-size:0.78rem;">${l.map(o => `<li><strong>${escapeHtml(o.c1)}</strong> (${escapeHtml(shortName(o.p))}${champStat(o.p, o.c1) ? ' ' + statText(o.p, o.c1) : ''}) + <strong>${escapeHtml(o.c2)}</strong> (${escapeHtml(shortName(o.q))}${champStat(o.q, o.c2) ? ' ' + statText(o.q, o.c2) : ''})${synergyOf(o.c1, o.c2) ? ' · sinergia' : ''}</li>`).join('') || '<li>—</li>'}</ul></div>`;
 }
+// ===== Pantalla: peces pròpies de l'escriptori (el mòbil té les seves a src/mobile/plataforma-mobil.js) =====
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  btn.classList.add('active');
+}
+function openDataTab() {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  const t = document.getElementById('tab-data'); if (t) t.classList.add('active');
+  const b = document.getElementById('btnTabData'); if (b) b.classList.add('active');
+}
+// Escriptori: porta-retalls i avís. El mòbil la substitueix pel full de compartir del sistema.
+function deliverPlanText(out, nParts) {
+  const done = () => alert(nParts > 1
+    ? `✅ Pla copiat en ${nParts} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
+    : '✅ Pla de partida copiat al porta-retalls llest per enganxar a Discord!');
+  try { navigator.clipboard.writeText(out).then(done, done); } catch (e) { done(); }
+}
+// L'informe tàctic s'acaba de generar: a l'escriptori hi baixem
+function showStrategySection(sec) { sec.scrollIntoView({ behavior: 'smooth' }); }
 </script>
 </body>
 </html>

@@ -1,0 +1,103 @@
+<!-- TAB 2: ROSTER & WINRATES REALS -->
+<div id="tab-roster" class="tab-content">
+  <div class="panel">
+    <div class="panel-header">
+      <span>👥 Jugadors, Rols i Dades Reals (Contrast Draft.xlsx vs OP.GG / Porofessor S2026)</span>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">
+      El motor dona prioritat extra als campions on teniu alt volum i winrate positiu demostrat en SoloQ aquesta temporada.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Jugador</th>
+          <th>Rol Torneig</th>
+          <th>Mains Excel (Draft.xlsx)</th>
+          <th>Dades Reals Destacades (OP.GG / Porofessor)</th>
+          <th>Pool Ampliat Disponible</th>
+        </tr>
+      </thead>
+      <tbody id="rosterTableBody"></tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <div class="panel-header"><span>✏️ Editor de rols i pools per rol (jugadors multi-rol)</span></div>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">
+      Cada jugador pot tenir diversos rols, cadascun amb els seus campions (separats per comes). Deixa un rol buit si no el juga. Es desa al navegador i regenera les composicions automàtiques.
+    </p>
+    <div id="roleEditor"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-primary" onclick="saveRolePools()">💾 Desa i regenera comps</button>
+      <button class="btn" onclick="resetRolePools()">↺ Valors per defecte</button>
+      <span id="roleEditorMsg" style="font-size:0.76rem;color:var(--text-muted);"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: LLIBRE DE COMPOSICIONS -->
+<div id="tab-comps" class="tab-content">
+  <div class="panel">
+    <div class="panel-header">
+      <span id="compsTitle">📚 Composicions</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Estil / Comentaris</th>
+          <th>Top / Jg / Mid / Bot / Sup (jugador)</th>
+          <th>Bona contra</th>
+          <th>Dolenta contra</th>
+          <th>Bans recomanats</th>
+        </tr>
+      </thead>
+      <tbody id="compsTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB: DADES I EDITORS -->
+<div id="tab-data" class="tab-content">
+  <div class="panel">
+    <div class="panel-header"><span>🛠️ Dades i Editors</span></div>
+    <div id="sharedStatus" style="font-size:0.8rem;margin:8px 0;padding:8px 10px;border:1px solid rgba(200,155,60,.4);border-radius:8px;background:rgba(10,20,40,.6);"></div>
+    <div style="margin-bottom:10px;"><button class="btn" onclick="exportLocal()">📋 Copia les meves dades locals</button> <small style="color:var(--text-muted);">per enviar-les a l'administrador i que les pugi a les dades compartides</small></div>
+    <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">Tot el que canvieu aquí es desa al navegador i recalcula recomanacions, comps i anàlisi. Cada editor té un botó per tornar als valors per defecte.</p>
+    <details open class="data-box"><summary>1. Importar winrates reals (op.gg)</summary><div id="opggImport"></div></details>
+    <details class="data-box"><summary>2a. Counters de lane (campió &gt; campions als quals guanya la línia)</summary>
+      <textarea id="countersText" class="search-bar" style="width:100%;min-height:160px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveCounters()">💾 Desa</button><button class="btn" onclick="resetCounters()">↺ Per defecte</button><span id="countersMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Malphite &gt; Yasuo, Yone, Fiora</code> (una línia per campió).</div></details>
+    <details class="data-box"><summary>2a-bis. Counters externs (enemic &gt; els seus millors counters, p. ex. d'u.gg / Lolalytics / metabot)</summary>
+      <textarea id="extText" class="search-bar" style="width:100%;min-height:140px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveExt()">💾 Desa</button><button class="btn" onclick="resetExt()">↺ Per defecte</button><span id="extMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Katarina &gt; Diana, Vladimir, Malphite</code>. Surten al tooltip en passar el ratolí per un pick rival i pesen a les recomanacions. Els campions sense dades usen el motor estructural (etiquetes).</div></details>
+    <details class="data-box"><summary>2b. Sinergies (parelles amb bonus a les comps generades i als bans/prediccions)</summary>
+      <textarea id="synergyText" class="search-bar" style="width:100%;min-height:140px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveSynergy()">💾 Desa i regenera comps</button><button class="btn" onclick="resetSynergy()">↺ Per defecte</button><span id="synergyMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Orianna + Jarvan IV : 8</code> (bonus 1-12, per defecte 5).</div></details>
+    <details class="data-box"><summary>3. Tier list del parc</summary>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;"><label style="font-size:0.78rem;">Parc de la tier list:</label><input id="tierSource" class="search-bar" style="margin:0;width:110px;"></div>
+      <textarea id="tierText" class="search-bar" style="width:100%;min-height:200px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><button class="btn btn-primary" onclick="saveTier()">💾 Desa</button><button class="btn" onclick="resetTier()">↺ Tier list del 26.23</button><span id="tierMsg" style="font-size:0.76rem;color:var(--text-muted);"></span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">Format: <code>Top S+: Darius, Sett</code>, <code>Jg S: Vi, Wukong</code>... (rols Top/Jg/Mid/Bot/Sup; tiers S+/S/A). Enganxa'n una de nova (p. ex. de METAsrc o op.gg) per al parc actual.</div></details>
+    <details class="data-box"><summary>4. Etiquetes i rols dels campions</summary>
+      <input type="text" id="tagChamp" list="champList" class="search-bar" placeholder="Campió (ex: Galio)" onchange="loadTagChamp()" oninput="loadTagChamp()">
+      <datalist id="champList"></datalist>
+      <div id="tagBoxes"></div>
+      <div id="tagMsg" style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;"></div>
+      <div id="tagOverrides" style="font-size:0.76rem;margin-top:4px;"></div></details>
+  </div>
+</div>
+
+<!-- TAB: DRAFT PRO -->
+<div id="tab-pro" class="tab-content">
+  <div class="panel" id="playerSheets"></div>
+  <div class="panel" id="proContent"></div>
+</div>
+
+<!-- TAB 4: CONTEXT DEL PARC -->
+<div id="tab-patch" class="tab-content">
+  <div class="panel" id="patchContent"></div>
+</div>
+

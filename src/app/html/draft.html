@@ -1,0 +1,87 @@
+<div id="tab-draft" class="tab-content active">
+  <div id="patchBanner" style="display:none;background:rgba(255,160,40,0.10);border:1px solid rgba(255,160,40,0.4);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:0.8rem;"></div>
+  <div class="draft-grid">
+    <!-- BLUE SIDE -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="blue-title">Costat blau <span id="blueTag">(NOSALTRES)</span></span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">First Pick</span>
+      </div>
+      <div class="side-lbl">Bans</div>
+      <div class="bans-container" id="blueBans"></div>
+      <div class="side-lbl">Picks</div>
+      <div id="bluePicks"></div>
+    </div>
+
+    <!-- CENTER ENGINE -->
+    <div class="panel">
+      <div class="turn-banner">
+        <div>
+          <div id="turnLabel" style="font-size:1rem;font-weight:800;">BB1 — Ban Blue Side (1)</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" onclick="undoLast()">↩️ Desfer</button>
+          <button class="btn" onclick="runWhatIf()">🔀 What-if</button>
+          {{boto_analitzar}}
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="matchBtn" onclick="openMatchMode()">🎮 Mode partida (draft ràpid)</button>
+      <!-- Recomanacions immediates -->
+      <div id="liveAdviceBox" style="background:rgba(10,200,185,0.08);border:1px solid rgba(10,200,185,0.3);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.82rem;">
+        <strong style="color:var(--blue);">💡 Recomanació en directe:</strong>
+        <span id="liveAdviceText">Carregant anàlisi...</span>
+      </div>
+
+      <div id="compBox"></div>
+      <div id="fearlessPanel" style="display:none;"></div>
+      <div id="whatIfBox" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.8rem;"></div>
+
+      <input type="text" id="champSearch" class="search-bar" placeholder="🔍 Cerca campió (ex: Pyke, Zaahen, Kai'Sa, Malphite, Vex...)" oninput="renderChampGrid()">
+
+      <div class="filter-pills" id="roleFilters">
+        <span class="pill active" onclick="setRoleFilter('ALL', this)">Tots</span>
+        <span class="pill" onclick="setRoleFilter('REC', this)">⭐ Recomanats (torn actual)</span>
+        <span class="pill" onclick="setRoleFilter('POOL', this)">⭐ Pool Equip</span>
+        <span class="pill" onclick="setRoleFilter('OPGG', this)">🔥 Top WR Real</span>
+        <span class="pill" onclick="setRoleFilter('Top', this)">Top</span>
+        <span class="pill" onclick="setRoleFilter('Jg', this)">Jungle</span>
+        <span class="pill" onclick="setRoleFilter('Mid', this)">Mid</span>
+        <span class="pill" onclick="setRoleFilter('Bot', this)">Bot</span>
+        <span class="pill" onclick="setRoleFilter('Sup', this)">Support</span>
+      </div>
+
+      <div class="champ-grid" id="champGrid"></div>
+
+      <!-- Rànquing Composicions -->
+      <div style="font-weight:700;font-size:0.88rem;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;">
+        <span>📊 Compatibilitat de les vostres comps (en directe)</span>
+        <span style="font-size:0.72rem;color:var(--text-muted);">Clica per fixar objectiu</span>
+      </div>
+      <div id="compsRanking"></div>
+    </div>
+
+    <!-- RED SIDE + SCOUTING -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="red-title">Costat vermell <span id="redTag">(RIVAL)</span></span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">Counter Pick (R5)</span>
+      </div>
+      <div class="side-lbl">Bans</div>
+      <div class="bans-container" id="redBans"></div>
+      <div class="side-lbl">Picks</div>
+      <div id="redPicks"></div>
+
+      <div class="scouting-box">
+        <div style="font-size:0.8rem;font-weight:700;color:#FF8A9B;">🎯 Scouting Rival (Target Bans)</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);">Afegeix OTPs o mains perillosos del rival (separats per coma):</div>
+        <div class="scouting-input-row">
+          <input type="text" id="enemyOtpInput" placeholder="Ex: Katarina, Yasuo, Draven" value="">
+          <button class="btn" onclick="updateEnemyOtps()">Aplicar</button>
+        </div>
+        <div id="enemyOtpBadges" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+        <div id="scoutPanel"></div>
+      </div>
+    </div>
+  </div>
+

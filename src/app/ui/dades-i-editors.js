@@ -58,12 +58,6 @@ function renderPatchBanner() {
   el.style.display = msgs.length ? 'block' : 'none';
   el.innerHTML = msgs.length ? `⚠️ ${msgs.join(' ')} Actualitza-la a <a href="#" onclick="openDataTab();return false;" style="color:var(--blue);">Dades i Editors</a>.` : '';
 }
-function openDataTab() {
-  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-  const t = document.getElementById('tab-data'); if (t) t.classList.add('active');
-  const b = document.getElementById('btnTabData'); if (b) b.classList.add('active');
-}
 
 function loadTagChamp() {
   const c = canonChamp(document.getElementById('tagChamp').value);

@@ -1,5 +1,5 @@
 // Service worker: l'app funciona sense connexió. Canvieu VERSION en pujar una versió nova.
-const VERSION = 'hextech-draft-v21';
+const VERSION = 'hextech-draft-v22';
 const IMG_CACHE = 'hextech-img-v1'; // icones de Data Dragon: es guarden entre versions
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 self.addEventListener('install', e => {

@@ -7,13 +7,14 @@ const ROOT = path.join(__dirname, '..', '..');
 const APP = path.join(ROOT, 'src', 'app');
 
 function dataBlock() {
-  // el mateix bloc que injecta src/app/build_desktop.py (surt de data.json)
-  return require('child_process').execFileSync('python3', [path.join(APP, 'build_desktop.py'), '--data-block'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  // el mateix bloc que injecta src/muntatge.py (surt de data.json)
+  return require('child_process').execFileSync('python3', [path.join(ROOT, 'src', 'muntatge.py'), '--data-block'], { encoding: 'utf8', maxBuffer: 1 << 26 });
 }
 
 module.exports = function loadEngine(opts = {}) {
   const order = fs.readFileSync(path.join(APP, 'modules.txt'), 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  const engine = order.filter(f => !f.startsWith('ui/'));
+  // el motor: tot menys la pantalla (ui/) i les peces d'una sola versió (@escriptori / @mobil)
+  const engine = order.filter(f => !f.startsWith('ui/') && !f.startsWith('@'));
   let code = engine.map(f => fs.readFileSync(path.join(APP, f), 'utf8')).join('').replace('/*@DATA@*/\n', dataBlock());
   // exporta totes les declaracions de primer nivell (const/let no van al context global)
   const names = [...code.matchAll(/^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/gm)].map(m => m[1]);

@@ -3,12 +3,6 @@ document.addEventListener('click', e => {
   const chip = e.target.closest('.champ-chip');
   if (chip && chip.dataset.champ) pickChampion(chip.dataset.champ);
 });
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
-  btn.classList.add('active');
-}
 function setOurSide(side) {
   state.ourSide = side;
   document.getElementById('btnSideBlue').className = side === 'BLUE' ? 'btn btn-active-blue' : 'btn';

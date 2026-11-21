@@ -1,4 +1,5 @@
 # Ordre de càrrega dels mòduls (importa: el codi de primer nivell s'executa en aquest ordre)
+# Les línies amb @escriptori o @mobil només entren en aquesta versió; la resta, a totes dues.
 data/roster-i-comps.js
 engine/estat-draft.js
 ui/accions-draft.js
@@ -63,8 +64,12 @@ builds/builds-reals.js
 plan/pla-detallat.js
 ui/pla-detallat.js
 engine/aprenentatge.js
+ui/inici.js
+@mobil ../mobile/plataforma-mobil.js
+@mobil ../mobile/inici-mobil.js
 ui/compartir.js
 data/dades-compartides.js
 ui/dades-compartides.js
 ui/consells-en-directe.js
 ui/fitxes-jugadors.js
+@escriptori ui/plataforma-escriptori.js

@@ -184,3 +184,7 @@ function showTipSheet(champ) {
   document.addEventListener('click', e => { if (fired) { e.stopPropagation(); e.preventDefault(); fired = false; } }, true);
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-ctr]')) e.preventDefault(); });
 })();
+// Compartir el pla: full de compartir del sistema (a l'escriptori, porta-retalls)
+function deliverPlanText(out) { shareText('Pla de partida', out, ''); }
+// L'informe tàctic s'acaba de generar: al mòbil, targetes plegables
+function showStrategySection() { makeCollapsible(document.getElementById('strategyContent')); }

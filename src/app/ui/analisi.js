@@ -91,7 +91,7 @@ function generateStrategy() {
 
   const sec = document.getElementById('strategySection');
   sec.style.display = 'block';
-  sec.scrollIntoView({ behavior: 'smooth' });
+  showStrategySection(sec);
 }
 function renderRosterTable() {
   document.getElementById('rosterTableBody').innerHTML = ROSTER.map((p, pi) => `

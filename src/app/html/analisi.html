@@ -1,0 +1,30 @@
+  <!-- ASSIGNACIÓ DE ROLS -->
+  <div id="assignSection" class="panel" style="margin-top:16px;">
+    <div class="panel-header">
+      <span>🧩 Assignació de rols: jugador + rol + pick</span>
+      <button class="btn" onclick="autoAssignClick()">🪄 Auto-assignar</button>
+    </div>
+    <p id="assignHint" style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;"></p>
+    <div class="assign-cols">
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--blue);margin-bottom:6px;">NOSALTRES</div>
+        <div id="assignRows"></div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:#FF8A9B;margin-bottom:6px;">RIVAL (rols probables)</div>
+        <div id="enemyRoleRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLA DE PARTIDA GENERAT -->
+  <div id="strategySection" class="strategy-box" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <span class="brand-badge">INFORME TÀCTIC POST-DRAFT</span>
+        <h3 id="stratTitle" style="color:var(--gold-light);margin-top:4px;">Pla de Partida — Composició Seleccionada</h3>
+      </div>
+      <button class="btn btn-primary" onclick="copyDiscordPlan()">📋 Copiar Pla per a Discord</button>
+    </div>
+    <div class="strategy-grid" id="strategyContent"></div>
+  </div>

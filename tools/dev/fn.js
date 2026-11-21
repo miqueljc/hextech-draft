@@ -7,7 +7,7 @@ const acorn = require('/opt/npm-tools/node_modules/acorn');
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', '..', 'src', 'app');
-const ORDER = fs.readFileSync(path.join(DIR, 'modules.txt'), 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+const ORDER = fs.readFileSync(path.join(DIR, 'modules.txt'), 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => l.replace(/^@\w+\s+/, ''));
 const [op, ...args] = process.argv.slice(2);
 function find(name) {
   for (const f of ORDER) {

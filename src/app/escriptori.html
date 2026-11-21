@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hextech Draft Room — Patch 26.23 (Pro Edition)</title>
+<style>{{estils}}</style>
+</head>
+<body>
+<div id="counterTip"></div>
+
+<header>
+  <div class="brand">
+    <span class="brand-badge">PATCH 26.23</span>
+    <h1>Hextech Draft Room</h1>
+  </div>
+  <div class="controls">
+    <div class="seg" title="El nostre costat"><button id="btnSideBlue" class="btn btn-active-blue" onclick="setOurSide('BLUE')">Som blau</button><button id="btnSideRed" class="btn" onclick="setOurSide('RED')">Som vermell</button></div>
+    <div class="seg" title="Ordre del draft"><button id="btnModeOrder" class="btn btn-active-blue" onclick="setDraftMode('ORDER')">Ordre de torneig</button><button id="btnModeFree" class="btn" onclick="setDraftMode('FREE')">Lliure</button></div>
+    <button id="btnFearless" class="btn" onclick="toggleFearless()">⚔️ Fearless: OFF</button>
+    <button class="btn btn-quiet" onclick="resetDraft()">Reinicia el draft</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('draft', this)">Draft</button>
+  <button class="tab-btn" onclick="switchTab('roster', this)">Equip i pools</button>
+  <button class="tab-btn" onclick="switchTab('comps', this)">Llibre de comps</button>
+  <button class="tab-btn" onclick="switchTab('pro', this)">Draft pro i flex</button>
+  <button class="tab-btn" id="btnTabData" onclick="switchTab('data', this)">Dades</button>
+  <button class="tab-btn" onclick="switchTab('patch', this)">Parc 26.23</button>
+</div>
+
+<!-- TAB 1: SIMULADOR -->
+{{draft}}{{analisi}}</div>
+
+{{pestanyes}}<script>{{app}}</script>
+</body>
+</html>

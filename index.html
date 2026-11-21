@@ -3654,7 +3654,7 @@ function generateStrategy() {
 
   const sec = document.getElementById('strategySection');
   sec.style.display = 'block';
-  makeCollapsible(document.getElementById('strategyContent'));
+  showStrategySection(sec);
 }
 function renderRosterTable() {
   document.getElementById('rosterTableBody').innerHTML = ROSTER.map((p, pi) => `
@@ -6276,7 +6276,7 @@ function copyDiscordPlan() {
 // --- 5. Historial: indica quantes partides venen de l'equip (compartides) ---
 
 
-// ===== Pantalla: aprenentatge (separat del motor) =====
+// ===== Arrencada: primer pintat de l'app =====
 init();
 // ================= APP MÒBIL: NAVEGACIÓ, EL MEU JOC I COMPARTIR =================
 const MAIN_TABS = ['draft', 'analysis', 'me'];
@@ -6464,7 +6464,11 @@ function showTipSheet(champ) {
   document.addEventListener('click', e => { if (fired) { e.stopPropagation(); e.preventDefault(); fired = false; } }, true);
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-ctr]')) e.preventDefault(); });
 })();
-
+// Compartir el pla: full de compartir del sistema (a l'escriptori, porta-retalls)
+function deliverPlanText(out) { shareText('Pla de partida', out, ''); }
+// L'informe tàctic s'acaba de generar: al mòbil, targetes plegables
+function showStrategySection() { makeCollapsible(document.getElementById('strategyContent')); }
+// ===== Arrencada del mòbil: taules en targetes, service worker i vista compartida (#j=...) =====
 // taules -> targetes (data-label)
 function labelTables(){
   document.querySelectorAll('.tab-content table').forEach(t=>{
@@ -6483,8 +6487,7 @@ try{ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) nav
   if(m){const d=decodeShare(m[1]); if(d&&d.v===1){showSharedView(d);return;}}
   switchTab('draft');
 })();
-// Escriptori: porta-retalls i avís. El mòbil la substitueix pel full de compartir del sistema.
-function deliverPlanText(out) { shareText('Pla de partida', out, ''); }
+// ===== Pantalla: aprenentatge (separat del motor) =====
 // ===== Dades compartides (data.json a GitHub): manen sobre les dades locals =====
 const SHARED_URL = 'https://miqueljc.github.io/hextech-draft/data.json';
 const SHARED_CACHE = 'hextech_shared_cache_v1';
