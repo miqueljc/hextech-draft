@@ -294,68 +294,17 @@ function pushHistory() {
 
 const ROLE_ORDER = ['Top', 'Jg', 'Mid', 'Bot', 'Sup'];
 
-document.addEventListener('click', e => {
-  const chip = e.target.closest('.champ-chip');
-  if (chip && chip.dataset.champ) pickChampion(chip.dataset.champ);
-});
 
-function init() {
-  captureDefaults();
-  afterDataChange();
-  updateEnemyOtps();
-  renderAll();
-}
 
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
-  btn.classList.add('active');
-}
 
-function setOurSide(side) {
-  state.ourSide = side;
-  document.getElementById('btnSideBlue').className = side === 'BLUE' ? 'btn btn-active-blue' : 'btn';
-  document.getElementById('btnSideRed').className = side === 'RED' ? 'btn btn-active-red' : 'btn';
-  document.getElementById('blueTag').textContent = side === 'BLUE' ? '(NOSALTRES)' : '(RIVAL)';
-  document.getElementById('redTag').textContent = side === 'RED' ? '(NOSALTRES)' : '(RIVAL)';
-  renderAll();
-}
 
-function setDraftMode(mode) {
-  state.draftMode = mode;
-  document.getElementById('btnModeOrder').className = mode === 'ORDER' ? 'btn btn-active-blue' : 'btn';
-  document.getElementById('btnModeFree').className = mode === 'FREE' ? 'btn btn-active-blue' : 'btn';
-  renderAll();
-}
 
 function toggleFearless() {
   state.fearless = !state.fearless;
   renderAll();
 }
 
-function resetDraft() {
-  state.blueBans = [null, null, null, null, null];
-  state.redBans = [null, null, null, null, null];
-  state.bluePicks = [null, null, null, null, null];
-  state.redPicks = [null, null, null, null, null];
-  state.history = [];
-  state.assign = { manual: false, rolePlayer: [0, 1, 2, 3, 4], roleChamp: [null, null, null, null, null] };
-  state.enemyLocks = {};
-  state.activeSlot = { type: 'BAN', side: 'BLUE', index: 0 };
-  document.getElementById('strategySection').style.display = 'none';
-  renderAll();
-}
 
-function updateEnemyOtps() {
-  const raw = document.getElementById('enemyOtpInput').value;
-  state.enemyOtps = raw.split(',').map(s => s.trim()).filter(Boolean);
-  const container = document.getElementById('enemyOtpBadges');
-  container.innerHTML = state.enemyOtps.map(c => `<span class="badge-target">⚠️ ${c}</span>`).join('');
-  renderAll();
-  const inp = document.getElementById('enemyOtpInput');
-  if (inp && state.scout) { state.scout.otps = inp.value; saveScout(); }
-}
 
 
 function getUnavailableChamps(side) {
@@ -386,39 +335,6 @@ function clearSlot(e, type, side, index) {
   renderAll();
 }
 
-function pickChampion(champ) {
-  const unavailable = getUnavailableChamps();
-  if (unavailable.has(champ)) return;
-
-  const { type, side, index } = state.activeSlot;
-  pushHistory();
-
-  if (type === 'BAN') {
-    if (side === 'BLUE') state.blueBans[index] = champ;
-    else state.redBans[index] = champ;
-  } else {
-    if (side === 'BLUE') state.bluePicks[index] = champ;
-    else state.redPicks[index] = champ;
-  }
-
-  // Avançar al següent slot buit segons ordre de torneig
-  const nextStep = TOURNAMENT_ORDER.find(step => {
-    const arr = step.type === 'BAN'
-      ? (step.side === 'BLUE' ? state.blueBans : state.redBans)
-      : (step.side === 'BLUE' ? state.bluePicks : state.redPicks);
-    return arr[step.index] === null;
-  });
-
-  if (state.draftMode === 'FREE') {
-    // Mode lliure: segueix al següent slot buit del mateix tipus i costat
-    const arr = type === 'BAN' ? (side === 'BLUE' ? state.blueBans : state.redBans) : (side === 'BLUE' ? state.bluePicks : state.redPicks);
-    const nextIdx = arr.findIndex((v, i) => i > index && v === null);
-    if (nextIdx !== -1) state.activeSlot = { type, side, index: nextIdx };
-  } else if (nextStep) {
-    state.activeSlot = { type: nextStep.type, side: nextStep.side, index: nextStep.index };
-  }
-  renderAll();
-}
 
 function undoLast() {
   if (!state.history.length) return;

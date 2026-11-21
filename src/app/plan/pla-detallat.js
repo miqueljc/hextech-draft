@@ -139,24 +139,5 @@ function buildStrategy() {
   } catch (e) { console.warn('deepPlan', e); }
   return s;
 }
-function deepPlanHtml(s) {
-  if (!s.deep) return '';
-  return `<div class="strat-card" data-keep-open="1" style="grid-column: 1 / -1;">
-    <h4>📋 Com jugar aquesta partida</h4>
-    <div class="dp-grid">
-      <div><strong>Teamfights</strong><ul>${s.deep.tf.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
-      <div><strong>Objectius</strong><ul>${s.deep.obj.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
-    </div>
-    <p class="dp-src">Els winrates de línia són de partides reals (Metabot, Emerald+). La resta són regles a partir de les etiquetes dels campions; feu-les servir com a punt de partida, no com a veritat absoluta.</p>
-  </div>`;
-}
 const _copyDiscordPlanBaseW = typeof copyDiscordPlan === 'function' ? copyDiscordPlan : null;
-(function wStyles() {
-  const css = `.dp-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:0.8rem; }
-  .dp-grid ul { margin:4px 0 0 18px; padding:0; line-height:1.45; }
-  .dp-grid li { margin-bottom:4px; }
-  .dp-src { color:var(--text-muted); font-size:0.72rem; margin-top:6px; }
-  @media (max-width: 700px) { .dp-grid { grid-template-columns:1fr; } }`;
-  try { const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); } catch (e) {}
-})();
 

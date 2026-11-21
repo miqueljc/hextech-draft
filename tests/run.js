@@ -1,11 +1,10 @@
-// Executa totes les proves. Ús: node tests/run.js  (VERBOSE=1 per veure-ho tot)
+// Executa les proves. Ús: node tests/run.js [--engine]  (VERBOSE=1 per veure-ho tot)
 const { spawnSync } = require('child_process');
 const path = require('path');
-const runs = [
-  ['engine_draft.test.js'], ['engine_strategy.test.js'], ['builds.test.js'],
-  ['learning.test.js'], ['match.test.js'], ['match.test.js', 'mobile'],
-  ['golden.test.js'], ['golden.test.js', 'mobile']
-];
+// --engine: només les proves que no necessiten navegador (les que s'executen primer a GitHub)
+const ENGINE = [['engine_draft.test.js'], ['engine_strategy.test.js'], ['engine/golden_engine.test.js']];
+const BROWSER = [['builds.test.js'], ['learning.test.js'], ['match.test.js'], ['match.test.js', 'mobile'], ['golden.test.js'], ['golden.test.js', 'mobile']];
+const runs = process.argv.includes('--engine') ? ENGINE : [...ENGINE, ...BROWSER];
 let failed = 0;
 const t0 = Date.now();
 for (const [f, ...args] of runs) {

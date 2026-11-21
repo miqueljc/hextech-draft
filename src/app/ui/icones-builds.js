@@ -1,12 +1,3 @@
-// ---------- 3. Icones de runes, encanteris i objectes (catàleg oficial de Data Dragon) ----------
-// Catàleg oficial verificat (Data Dragon 16.23.1) inclòs a l'app; s'actualitza sol quan surt una versió nova
-const DD_CAT_KEY = 'hextech_ddcat_v2';
-let DD_CAT = DD_CAT_DEFAULT;
-try { const c = JSON.parse(localStorage.getItem(DD_CAT_KEY) || 'null'); if (c && c.items && c.spells && Object.keys(c.spells).length) DD_CAT = c; } catch (e) {}
-function ddNorm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
-const ITEM_ALIAS = { ludensecho: ['ludenscompanion', 'ludensecho'], objectedesuport: ['worldatlas', 'runiccompass', 'bountyofworlds'], pociodevida: ['healthpotion'], botesdetier3delaquestdemid: [] };
-const SHARD_ICON = { adaptiveforce: 'StatModsAdaptiveForceIcon', attackspeed: 'StatModsAttackSpeedIcon', abilityhaste: 'StatModsCDRScalingIcon', healthscaling: 'StatModsHealthScalingIcon', tenacityandslowresist: 'StatModsTenacityIcon', health: 'StatModsHealthPlusIcon', movespeed: 'StatModsMovementSpeedIcon' };
-let _ddCatLoading = false;
 function ddLoadCatalog(force) {
   if (_ddCatLoading || (DD_CAT && DD_CAT.ver === DD_VER && !force)) return;
   if (typeof fetch !== 'function') return;
@@ -37,13 +28,6 @@ function ddLoadCatalog(force) {
     try { const sec = document.getElementById('strategySection'); if (sec && sec.style.display !== 'none' && typeof generateStrategy === 'function') generateStrategy(); } catch (e) {}
   });
 }
-function itemUrl(name) {
-  if (!DD_CAT) return null;
-  const k = ddNorm(name), keys = ITEM_ALIAS[k] || [k];
-  for (const kk of keys) { const id = DD_CAT.items[kk]; if (id) return `https://ddragon.leagueoflegends.com/cdn/${DD_CAT.ver}/img/item/${id}.png`; }
-  return null;
-}
-function runeUrl(name) { const p = DD_CAT && (DD_CAT.runes[ddNorm(name)] || DD_CAT.trees[ddNorm(name)]); return p ? `https://ddragon.leagueoflegends.com/cdn/img/${p}` : null; }
 function spellUrl(name) { const f = DD_CAT && DD_CAT.spells[ddNorm(name)]; return f ? `https://ddragon.leagueoflegends.com/cdn/${DD_CAT.ver}/img/spell/${f}` : null; }
 function shardUrl(name) { const f = SHARD_ICON[ddNorm(name)]; return f ? `https://ddragon.leagueoflegends.com/cdn/img/perk-images/StatMods/${f}.png` : null; }
 // Icona genèrica: si no hi ha imatge, xip de text
@@ -53,14 +37,6 @@ function gIcon(url, label, size, why, cls) {
   return url
     ? `<span class="gi ${cls || ''}" style="width:${size}px;height:${size}px;" title="${t}" data-n="${t}"><img src="${url}" alt="" loading="lazy" onerror="this.parentNode.classList.add('gi-fail')"><i>${short}</i></span>`
     : `<span class="gi gi-txt ${cls || ''}" title="${t}" data-n="${t}"><i>${short}</i></span>`;
-}
-// "A / B", "A o B", "A → B", "A + B" amb notes entre parèntesis
-function itemTokens(str) {
-  const notes = []; const clean = String(str || '').replace(/\(([^)]*)\)/g, (_, n) => { notes.push(n); return ''; }).trim();
-  const parts = clean.split(/\s+(\/|o|→|\+)\s+/);
-  const out = [];
-  for (let i = 0; i < parts.length; i += 2) out.push({ name: parts[i].trim(), sep: parts[i + 1] || '' });
-  return { list: out.filter(x => x.name), note: notes.join('; ') };
 }
 function itemsHtml(str, size, why) {
   const { list, note } = itemTokens(str);

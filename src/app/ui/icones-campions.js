@@ -1,10 +1,5 @@
 // ===== Bloc P: icones oficials dels campions (Riot Data Dragon) =====
-const DD_VER_DEFAULT = '16.23.1'; // Data Dragon 16.23.x = parc 26.23
 let DD_VER = DD_VER_DEFAULT;
-try { const v = localStorage.getItem('hextech_ddver_v1'); if (v && /^\d+\.\d+\.\d+$/.test(v)) DD_VER = v; } catch (e) {}
-const DD_EXC = { 'Wukong': 'MonkeyKing', "Kai'Sa": 'Kaisa', "Kha'Zix": 'Khazix', "Cho'Gath": 'Chogath', "Vel'Koz": 'Velkoz', "Bel'Veth": 'Belveth', 'LeBlanc': 'Leblanc', 'Nunu & Willump': 'Nunu', 'Renata Glasc': 'Renata', 'Doctor Mundo': 'DrMundo', "Kog'Maw": 'KogMaw', "Rek'Sai": 'RekSai', "K'Sante": 'KSante' };
-function ddId(c) { return DD_EXC[c] || String(c).replace(/[^A-Za-z0-9]/g, ''); }
-function champImgUrl(c) { return `https://ddragon.leagueoflegends.com/cdn/${DD_VER}/img/champion/${ddId(c)}.png`; }
 function champInitials(c) { const w = String(c).replace(/[^A-Za-z ]/g, '').split(' ').filter(Boolean); return (w.length > 1 ? w[0][0] + w[1][0] : String(c).slice(0, 2)).toUpperCase(); }
 // size: píxels (0 = s'adapta a l'amplada del contenidor)
 function champIcon(c, size, cls) {

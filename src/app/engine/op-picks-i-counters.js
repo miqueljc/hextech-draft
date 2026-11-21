@@ -41,28 +41,4 @@ function addOpAndCounterBonus(out, ctx, excludeIdx) {
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('opCounter', e); }
 }
-// Línies destacades al quadre de recomanació en directe (torn de pick vostre)
-function opCounterAdviceHtml() {
-  const st = state.activeSlot;
-  if (st.type !== 'PICK' || st.side !== state.ourSide || mmComplete()) return '';
-  const recs = recommendChamps(buildCtx(), st.index);
-  const ops = recs.filter(r => r.flags && r.flags.op).slice(0, 3);
-  const cts = recs.filter(r => r.flags && r.flags.counter).slice(0, 3);
-  let h = '';
-  if (ops.length) h += `<br><span style="color:var(--gold);">⭐ OP del ${escapeHtml(OP_PICKS.patch || '')} al vostre pool (línia rival encara oculta):</span> ${ops.map(r => `<strong>${escapeHtml(r.champ)}</strong> (${r.flags.op})`).join(' · ')}`;
-  if (cts.length) h += `<br><span style="color:var(--blue);">🎯 Counters al vostre pool:</span> ${cts.map(r => `<strong>${escapeHtml(r.champ)}</strong> contra ${escapeHtml(r.flags.counter)}`).join(' · ')}`;
-  return h;
-}
-// Distintius a les targetes (escriptori i mode partida)
-function flagBadges(r) {
-  if (!r || !r.flags) return '';
-  return (r.flags.op ? `<span class="fl-op" title="OP del parc a ${r.flags.op}">OP</span>` : '') + (r.flags.counter ? `<span class="fl-ct" title="Counter contra ${escapeHtml(r.flags.counter)}">Counter</span>` : '');
-}
-(function uStyles() {
-  const css = `.fl-op, .fl-ct { display:inline-block; font-family:'Segoe UI',system-ui,sans-serif; font-size:0.6rem; font-weight:800; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-left:3px; letter-spacing:0; }
-  .fl-op { background:var(--gold); color:#010A13; }
-  .fl-ct { background:rgba(10,200,185,0.2); color:var(--blue); border:1px solid rgba(10,200,185,0.5); }
-  .adv-flags { font-size:0.78rem; line-height:1.5; margin:2px 0 6px; }`;
-  try { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } catch (e) {}
-})();
 

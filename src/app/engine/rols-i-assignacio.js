@@ -105,14 +105,6 @@ function phaseOf(c) {
   if ((isReactive(c) && my.length < 2) || (my.length === 1 && pub <= 1 && bt !== 'S+')) return 3;
   return flexScoreOf(c) >= 12 ? 1 : 2;
 }
-function phaseAdviceHtml(k) {
-  const pos = draftPos();
-  if (pos.enemyAfter === 0) return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
-  if (k >= 3) return `<br><span style="color:var(--gold);">🧠 Pick final vostre, però el rival encara en té ${pos.enemyAfter}:</span> us pot respondre. Eviteu picks que tinguin counters disponibles al rol que li falta i guardeu el counter-pick per a l'últim slot si en teniu.`;
-  if (k <= 1) return `<br><span style="color:var(--gold);">🧠 Fase 1 (informació mínima):</span> tria <strong>flex</strong> i picks <strong>segurs a cegues</strong>; guarda per al final els picks d'un sol rol i els reactius (Pyke, Malphite, Poppy…). Tot el que triïs ho veurà el rival.`;
-  if (k <= 3) return `<br><span style="color:var(--gold);">🧠 Fase 2:</span> ja heu mostrat bastant; completa el que falta (frontline / engage / dany) i comença a respondre als seus picks. Deixa <strong>1-2 rols oberts</strong> per decidir el final.`;
-  return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
-}
 
 // ---- Aliats: assignació jugador + rol + campió ----
 function playerRoleScore(p, r) {

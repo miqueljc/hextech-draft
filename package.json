@@ -4,7 +4,8 @@
   "description": "Assistent de draft de League of Legends per a l'equip",
   "scripts": {
     "build": "python3 build.py",
-    "test": "node tests/run.js"
+    "test": "node tests/run.js",
+    "test:engine": "node tests/run.js --engine"
   },
   "devDependencies": {
     "playwright": "1.63.0"

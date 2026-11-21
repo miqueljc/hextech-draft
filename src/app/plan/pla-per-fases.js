@@ -40,19 +40,6 @@ function buildPhasePlan(x) {
   if (!loseConds.length) loseConds.push('Cap patró de derrota clar: eviteu errors de visió i morts evitables.');
   return { phases, winConds, loseConds };
 }
-function phasePlanHtml(p) {
-  return `<div class="strat-card" style="grid-column: 1 / -1;">
-    <h4>🗺️ Pla per fases amb timings d'objectius</h4>
-    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
-      <tbody>${p.phases.map(f => `<tr><td style="padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.06);white-space:nowrap;color:var(--gold);vertical-align:top;"><strong>${escapeHtml(f.time)}</strong></td><td style="padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top;"><strong>${escapeHtml(f.title)}</strong><br><span>${escapeHtml(f.text)}</span></td></tr>`).join('')}</tbody>
-    </table></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
-      <div><strong style="color:var(--green);">🏆 Condicions de victòria</strong><ul style="margin-top:4px;">${p.winConds.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
-      <div><strong style="color:#FF8A9B;">⚠️ Com ens poden guanyar</strong><ul style="margin-top:4px;">${p.loseConds.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
-    </div>
-    <div style="color:var(--text-muted);font-size:0.72rem;margin-top:6px;">Temps d'objectius de la temporada 2026 segons <a href="https://www.nerfplz.com/2026/08/every-summoners-rift-objective.html" target="_blank" rel="noopener" style="color:var(--blue);">nerfplz.com</a> (Drac 5:00, Grubs 8:00, Herald 15:00, Baró 20:00); comprova-ho si el 26.23 els ha canviat.</div>
-  </div>`;
-}
 function phasePlanDiscord(p) {
   let t = `\n🗺️ **PLA PER FASES:**\n`;
   p.phases.forEach(f => { t += `• **${f.time} — ${f.title}:** ${f.text}\n`; });

@@ -1,0 +1,36 @@
+name: Proves
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  motor:
+    name: Muntatge i motor (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pc.html i index.html corresponen al codi font
+        run: |
+          python3 build.py
+          git diff --exit-code -- pc.html index.html || (echo "::error::Cal executar python3 build.py i pujar pc.html i index.html" && exit 1)
+      - name: Proves del motor
+        run: npm run test:engine
+
+  navegador:
+    name: Pantalla (Chromium)
+    runs-on: ubuntu-latest
+    needs: motor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Totes les proves
+        run: npm test

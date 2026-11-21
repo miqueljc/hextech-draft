@@ -57,12 +57,5 @@ const STRUCT_SYN = [
   [x => hasTag(x, 'ap') && !hasTag(x, 'ad'), c => hasTag(c, 'ad') && !hasTag(c, 'ap'), 1, 'complementa el dany (AD/AP)']
 ];
 const LANE_PAIR = [['Bot', 'Sup'], ['Jg', 'Mid'], ['Jg', 'Sup'], ['Jg', 'Top']];
-function synergyTipHtml(x) {
-  const list = synergyCandidates(x, 3);
-  const enemy = getEnemyPicks().includes(x);
-  const rows = list.length ? list.map(s => `<div class="ct-row"><strong>${escapeHtml(s.champ)}</strong>${s.who.length ? ` <span class="badge-pool">👤 ${escapeHtml(s.who.join('/'))}</span>` : ''}<br><span>${escapeHtml(s.why.join(' · '))}${s.src ? ` <em>(${escapeHtml(s.src)})</em>` : ''}</span></div>`).join('')
-    : '<div class="ct-row" style="color:var(--text-muted);">Cap parella clara disponible.</div>';
-  return `<div class="ct-head" style="margin-top:6px;">🤝 Sinergies de <strong>${escapeHtml(x)}</strong>${enemy ? ' <small>(les voldran ells: considereu banejar/robar)</small>' : ''}</div>${rows}`;
-}
 
 

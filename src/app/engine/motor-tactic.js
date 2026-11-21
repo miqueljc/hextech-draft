@@ -88,69 +88,6 @@ function getActiveRecs(ctx) {
   return recommendChamps(ctx || buildCtx(), index);
 }
 
-function recReasons(r, max = 3) {
-  const pos = r.why.filter(w => w.pts > 0).sort((a, b) => b.pts - a.pts).slice(0, max).map(w => w.txt);
-  const neg = r.why.filter(w => w.pts < 0).sort((a, b) => a.pts - b.pts)[0];
-  return pos.join(', ') + (neg ? ` <span style="color:#FF8A9B;">(⚠️ ${neg.txt})</span>` : '');
-}
 
-function draftSnapshotText(A, B, ourChamps) {
-  const needs = [];
-  if (A.n >= 1) {
-    if (A.front === 0) needs.push('frontline');
-    if (A.eng === 0) needs.push('engage');
-    if (A.n >= 3 && A.peel === 0) needs.push('peel');
-    if (A.n >= 3 && A.ap === 0) needs.push('dany AP');
-    if (A.n >= 3 && A.ad === 0) needs.push('dany AD');
-  }
-  const en = [];
-  if (B.poke >= 2) en.push(`poke ×${B.poke}`);
-  if (B.dive + B.assn >= 2) en.push(`dive/assassins ×${B.dive + B.assn}`);
-  if (B.eng >= 2) en.push(`engage ×${B.eng}`);
-  if (B.peel >= 2) en.push(`peel ×${B.peel}`);
-  if (B.front >= 2) en.push(`frontline ×${B.front}`);
-  if (B.n >= 3 && B.mob <= 1) en.push('poca mobilitat');
-  if (B.n >= 3 && B.front === 0) en.push('sense frontline');
-  const parts = [];
-  if (needs.length) parts.push(`Al vostre draft us falta: <strong>${needs.join(', ')}</strong>.`);
-  if (en.length) parts.push(`El rival mostra: <strong>${en.join(', ')}</strong>.`);
-  if (ourChamps.length >= 2 && maxRoleMatching(ourChamps) < ourChamps.length) {
-    parts.push(`<span style="color:var(--orange);">⚠️ Els vostres picks no poden cobrir 5 rols diferents.</span>`);
-  }
-  return parts.length ? `<br><span style="color:var(--text-muted);">${parts.join(' ')}</span>` : '';
-}
 
-function liveAdviceText(rankedComps) {
-  const ctx = buildCtx();
-  ctx.ranked = rankedComps;
-  ctx.comp = pickComp(rankedComps);
-  const unavailable = ctx.unavailable, topComp = ctx.comp;
-  const A = teamProfile(ctx.ourPicks), B = teamProfile(ctx.enemyPicks);
-  const snap = draftSnapshotText(A, B, ctx.ourPicks);
-  const { type, side, index } = state.activeSlot;
-  const isOurTurn = side === state.ourSide;
-
-  if (type === 'BAN') {
-    const phase2 = ctx.ourPicks.length + ctx.enemyPicks.length > 0;
-    if (isOurTurn) {
-      const lines = recommendBans(ctx).slice(0, 4).map((b, k) => `<br>${k + 1}. <strong>${escapeHtml(b.champ)}</strong> <span style="color:var(--gold);">(${b.score} pts)</span> — ${recReasons(b)}`).join('');
-      return `<strong>Torn de BAN nostre</strong> <span style="color:var(--text-muted);">(${phase2 ? 'ronda 2: respon als seus picks, als rols que els falten i a les sinergies' : 'ronda 1: força al meta, OTPs i flex; poc counter concret per no revelar el pla'}):</span>${lines}${snap}`;
-    }
-    const all = recommendChamps(ctx, -1);
-    const risk = all.slice(0, 3).map(r => r.champ);
-    const backup = all.slice(3).find(r => !risk.includes(r.champ));
-    return `<strong>Torn de BAN rival:</strong> els vostres millors candidats ara són <strong>${risk.map(escapeHtml).join(', ') || '—'}</strong> i els poden banejar.${backup ? ` Pla B ja preparat: <strong>${escapeHtml(backup.champ)}</strong>.` : ''} Si cauen, pivota cap a <strong>${escapeHtml(rankedComps[1].name)}</strong>.${snap}`;
-  }
-
-  const recs = recommendChamps(ctx, isOurTurn ? index : -1);
-  const line = (r, k) => `<br>${k + 1}. <strong>${escapeHtml(r.champ)}</strong> <span style="color:var(--gold);">(${r.score} pts)</span> — ${recReasons(r)}`;
-  if (isOurTurn) {
-    const html = recs.length
-      ? recs.slice(0, 4).map(line).join('')
-      : ' cap candidat disponible.';
-    return `<strong>Torn de PICK nostre</strong> <span style="color:var(--text-muted);">(sense mirar jugador ni rol; l'assignació va després):</span>${html}${snap}${phaseAdviceHtml(ctx.ourPicks.filter((c, i) => i !== index && getOurPicks()[i]).length)}${predictionHtml(ctx, 3)}<br><span style="color:var(--text-muted);">Comp objectiu: ${escapeHtml(topComp.name)} (${topComp.score}%).</span>`;
-  }
-  const prev = recs.slice(0, 3).map(r => `<strong>${escapeHtml(r.champ)}</strong>`).join(', ');
-  return `<strong>Torn de PICK rival:</strong> si us toqués ara, les millors respostes serien → ${prev || '—'}. Es reavaluarà quan triïn.${snap}${predictionHtml(ctx, 4)}`;
-}
 
