@@ -1,5 +1,13 @@
-"""Munta pc.html: plantilla HTML + mòduls de src/app (en l'ordre de modules.txt) + dades de reserva de src/data."""
+"""Munta pc.html: plantilla HTML + mòduls de src/app (en l'ordre de modules.txt) + dades de reserva.
+
+Les dades de reserva (per quan no hi ha connexió) surten de data.json, que és l'única font: no n'hi ha cap còpia
+al codi. Només el catàleg d'icones (src/data/ddcat.json) no és a data.json.
+  python3 src/app/build_desktop.py               munta pc.html
+  python3 src/app/build_desktop.py --data-block  escriu només el bloc de dades (el fa servir tests/engine/harness.js)
+"""
+import json
 import os
+import sys
 APP = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.dirname(APP)
 ROOT = os.path.dirname(SRC)
@@ -10,13 +18,25 @@ def read(p):
         return f.read()
 
 
+# constant del codi <- clau de data.json (i camp, si cal)
+FROM_DATA_JSON = [
+    ('OP_PICKS_DEFAULT', 'hextech_oppicks_v1', None),
+    ('MATCHUPS_DEFAULT', 'hextech_matchups_v1', None),
+    ('DUOWR_DEFAULT', 'hextech_duowr_v1', None),
+    ('ROLE_RATES_DEFAULT', 'hextech_rolerates_v1', None),
+    ('REAL_BUILDS_DEFAULT', 'hextech_builds_v1', 'builds'),
+    ('REAL_BUILDS_PATCH_DEFAULT', 'hextech_builds_v1', 'patch'),
+    ('REAL_BUILDS_SRC_DEFAULT', 'hextech_builds_v1', 'source'),
+]
+
+
 def data_block():
-    d = os.path.join(SRC, 'data')
-    return ('const OP_PICKS_DEFAULT = ' + read(os.path.join(d, 'op2623.json')).strip() + ';\n'
-            'const DD_CAT_DEFAULT = ' + read(os.path.join(d, 'ddcat.json')).strip() + ';\n'
-            'const MATCHUPS_DEFAULT = ' + read(os.path.join(d, 'matchups.json')) + ';\n'
-            'const DUOWR_DEFAULT = ' + read(os.path.join(d, 'duowr.json')) + ';\n'
-            'const ROLE_RATES_DEFAULT = ' + read(os.path.join(d, 'rolerates.json')) + ';\n')
+    data = json.loads(read(os.path.join(ROOT, 'data.json')))['data']
+    out = 'const DD_CAT_DEFAULT = ' + read(os.path.join(SRC, 'data', 'ddcat.json')).strip() + ';\n'
+    for const, key, field in FROM_DATA_JSON:
+        v = data[key] if field is None else data[key][field]
+        out += 'const %s = %s;\n' % (const, json.dumps(v, ensure_ascii=False, separators=(',', ':')))
+    return out
 
 
 def build():
@@ -33,4 +53,7 @@ def build():
 
 
 if __name__ == '__main__':
-    build()
+    if '--data-block' in sys.argv:
+        sys.stdout.write(data_block())
+    else:
+        build()

@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 export const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROLES = ['Top', 'Jg', 'Mid', 'Bot', 'Sup'];
@@ -37,5 +38,13 @@ export function writeData(file, data, note, dry) {
     + Object.entries(data.data).map(([k, v]) => '  ' + JSON.stringify(k) + ': ' + fmt(v)).join(',\n') + '\n }\n}\n';
   JSON.parse(out);
   if (dry) console.log(`(--dry: no s'ha escrit res; seria data.json v${data.version})`);
-  else { fs.writeFileSync(file, out); console.log(`Escrit ${file} (v${data.version}, ${today})`); }
+  else {
+    fs.writeFileSync(file, out); console.log(`Escrit ${file} (v${data.version}, ${today})`);
+    // data.json és l'única font: l'app en porta una còpia per quan no hi ha connexió, que es torna a muntar
+    const root = path.join(here, '..');
+    if (path.resolve(file) === path.join(root, 'data.json')) {
+      try { execFileSync('python3', [path.join(root, 'build.py')], { cwd: root, stdio: 'ignore' }); console.log('Tornats a muntar pc.html i index.html (còpia sense connexió al dia)'); }
+      catch (e) { console.log('AVÍS: no s\'han pogut tornar a muntar pc.html i index.html; executa python3 build.py'); }
+    }
+  }
 }

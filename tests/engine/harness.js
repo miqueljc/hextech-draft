@@ -7,13 +7,8 @@ const ROOT = path.join(__dirname, '..', '..');
 const APP = path.join(ROOT, 'src', 'app');
 
 function dataBlock() {
-  // mateixa injecció que src/app/build_desktop.py
-  const d = f => fs.readFileSync(path.join(ROOT, 'src', 'data', f), 'utf8');
-  return 'const OP_PICKS_DEFAULT = ' + d('op2623.json').trim() + ';\n' +
-    'const DD_CAT_DEFAULT = ' + d('ddcat.json').trim() + ';\n' +
-    'const MATCHUPS_DEFAULT = ' + d('matchups.json') + ';\n' +
-    'const DUOWR_DEFAULT = ' + d('duowr.json') + ';\n' +
-    'const ROLE_RATES_DEFAULT = ' + d('rolerates.json') + ';\n';
+  // el mateix bloc que injecta src/app/build_desktop.py (surt de data.json)
+  return require('child_process').execFileSync('python3', [path.join(APP, 'build_desktop.py'), '--data-block'], { encoding: 'utf8', maxBuffer: 1 << 26 });
 }
 
 module.exports = function loadEngine(opts = {}) {

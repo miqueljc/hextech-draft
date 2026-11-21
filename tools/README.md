@@ -27,7 +27,7 @@ La app llegeix les fitxes de rivals de `data.json` i les ofereix al selector **�
 
 ## Builds reals i OP picks del parc (`hextech_builds_v1`, `hextech_oppicks_v1`)
 
-La pestanya d'anàlisi agafa la base de cada build (runes, fragments, summoners, inici, botes i 3 objectes core) de `hextech_builds_v1`; si no hi ha connexió, fa servir la còpia que porta l'app.
+La pestanya d'anàlisi agafa la base de cada build (runes, fragments, summoners, inici, botes i 3 objectes core) de `hextech_builds_v1`; si no hi ha connexió, fa servir la còpia que `python3 build.py` enganxa a l'app a partir del mateix `data.json` (cal tornar a muntar després d'actualitzar-lo).
 
 1. Per a cada campió i rol, obrir `https://op.gg/lol/champions/<campió>/build/<rol>` (rols: `top`, `jungle`, `mid`, `adc`, `support`) i apuntar la build més jugada.
 2. Muntar `builds.json` (format detallat a la capçalera de `tools/update_builds.mjs`).

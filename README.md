@@ -19,8 +19,8 @@ Assistent de draft de League of Legends per a l'equip. Funciona com una sola pà
 | `src/app/plan/` | Anàlisi del draft i pla de partida |
 | `src/app/ui/` | Pantalles: tot el que toca l'HTML (render, filtres, mode partida, icones, estils, accions dels botons) |
 | `src/mobile/` | Versió mòbil (es munta a partir de l'escriptori) |
-| `src/data/*.json` | Còpia de les dades que l'app porta per funcionar sense connexió |
-| `data.json` | Dades compartides que l'app descarrega en obrir-se (pools, matchups, builds, rivals, historial...) |
+| `src/data/ddcat.json` | Catàleg d'icones de Data Dragon (per quan no hi ha connexió) |
+| `data.json` | **Única font** de les dades compartides (pools, matchups, builds, rivals, historial...). L'app la descarrega en obrir-se, i el muntatge n'enganxa una còpia a `pc.html`/`index.html` per quan no hi ha connexió |
 | `tools/` | Eines per actualitzar `data.json` (vegeu `tools/README.md`) |
 | `tests/` | Proves automàtiques (inclosa la de referència, `tests/golden`) |
 
@@ -35,6 +35,8 @@ npx playwright install chromium
 npm run test:engine   # proves del motor en Node, sense navegador (~45 s)
 npm test              # totes les proves (~4 min, la de referència juga 210 drafts)
 ```
+
+Si canvies `data.json`, torna a muntar (`python3 build.py`) perquè la còpia sense connexió quedi al dia: la prova de GitHub falla si no ho fas.
 
 A cada `git push`, GitHub executa les proves (`.github/workflows/test.yml`): primer comprova que `pc.html` i `index.html` estan muntats amb el codi actual i passa les proves del motor; després, les de pantalla amb Chromium.
 
