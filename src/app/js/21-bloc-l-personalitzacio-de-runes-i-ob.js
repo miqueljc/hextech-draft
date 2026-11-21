@@ -13,16 +13,9 @@ function laneOppsFor(role) {
     return info.champs.map(e => ({ champ: e, prob: info.dist[e][r] })).filter(x => x.prob >= 0.3).sort((a, b) => b.prob - a.prob).slice(0, role === 'Bot' || role === 'Sup' ? 2 : 2);
   } catch (e) { return []; }
 }
-function realMatchupNote(c, e) {
-  const wins = (typeof EXT_COUNTERS !== 'undefined' && EXT_COUNTERS[c] || []).includes(e);   // e et counteja a tu
-  const youWin = (typeof EXT_COUNTERS !== 'undefined' && EXT_COUNTERS[e] || []).includes(c);
-  if (wins && !youWin) return `${e} et counteja segons winrates reals`;
-  if (youWin && !wins) return `tu counteges ${e} segons winrates reals`;
-  return '';
-}
 function namesOf(list, max = 3) { return list.slice(0, max).join(', ') + (list.length > max ? '…' : ''); }
 
-function personalizeBuild(adv, c, role, x) {
+function personalizeBuild__base(adv, c, role, x) {
   const arch = adv.arch, T = BUILD_T[arch], enemy = x.enemy || [], our = x.our || [];
   const fragile = FRAGILE_ARCH.has(arch), tankish = ['TK', 'TS'].includes(arch);
   const dealers = enemy.filter(e => !['TK', 'TS'].includes((ARCH[e] || {}).code));
@@ -121,10 +114,9 @@ function personalizeBuild(adv, c, role, x) {
     situ: picks.map(p => ({ why: p.why, item: p.item })), boots: dupBoots };
 }
 
-const adviseBuildBase = adviseBuild;
-adviseBuild = function (c, role, x) {
-  const b = adviseBuildBase(c, role, x);
+function adviseBuild(c, role, x) {
+  const b = adviseBuild__base(c, role, x);
   try { return personalizeBuild(b, c, role, x); } catch (e) { console.warn('personalizeBuild', e); return b; }
-};
+}
 
 /*@DATA@*/

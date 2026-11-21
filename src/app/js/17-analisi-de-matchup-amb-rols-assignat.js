@@ -1,29 +1,6 @@
 // ================= ANÀLISI DE MATCHUP (amb rols assignats) =================
-function laneMatchup(c, e, role) {
-  let score = 0;
-  const notes = [];
-  if ((LANE_COUNTERS[c] || []).includes(e)) { score += 3; notes.push(`${c} counteja ${e}`); }
-  if ((LANE_COUNTERS[e] || []).includes(c)) { score -= 3; notes.push(`${e} counteja ${c}`); }
-  if ((EXT_COUNTERS[e] || []).includes(c)) { score += 2; notes.push(`${c} counteja ${e} (dades externes)`); }
-  if ((EXT_COUNTERS[c] || []).includes(e)) { score -= 2; notes.push(`${e} counteja ${c} (dades externes)`); }
-  if (role === 'Top' || role === 'Mid') {
-    if (hasTag(c, 'rng') && !hasTag(e, 'rng')) { score += 1; notes.push('avantatge de rang'); }
-    if (!hasTag(c, 'rng') && hasTag(e, 'rng')) { score -= 1; notes.push('desavantatge de rang'); }
-  }
-  if (role === 'Sup') {
-    if (hasTag(c, 'eng') && hasTag(e, 'peel') && !hasTag(e, 'eng')) { score += 1; notes.push('engage contra enchanter/peel'); }
-    if (hasTag(e, 'eng') && hasTag(c, 'peel') && !hasTag(c, 'eng')) { score -= 1; notes.push('el seu engage contra el vostre peel'); }
-  }
-  const ce = hasTag(c, 'early'), ee = hasTag(e, 'early');
-  if (ce && !ee) { score += 1; notes.push('més pic early'); }
-  if (!ce && ee) { score -= 1; notes.push('menys pic early'); }
-  const tc = tierPts(c, role), te = tierPts(e, role);
-  if (tc - te >= 6) { score += 1; notes.push(`meta ${PATCH_META.tierSource}: ${c} ${tierIn(c, role) || '—'} vs ${e} ${tierIn(e, role) || '—'}`); }
-  if (te - tc >= 6) { score -= 1; notes.push(`meta ${PATCH_META.tierSource}: ${e} ${tierIn(e, role) || '—'} vs ${c} ${tierIn(c, role) || '—'}`); }
-  return { score, notes };
-}
 
-function buildStrategy() {
+function buildStrategy__base() {
   const ranked = evaluateComps();
   const comp = pickComp(ranked);
   const asg = getAssignment();
@@ -179,7 +156,7 @@ const VERDICT_UI = {
   unknown: { icon: '⏳', color: 'var(--text-muted)', label: 'Pendent' }
 };
 
-function generateStrategy() {
+function generateStrategy__base() {
   const s = buildStrategy();
   const { comp, A, B } = s;
   const enemyNames = B.list.length ? B.list.join(', ') : 'rival pendent';
@@ -274,40 +251,6 @@ function generateStrategy() {
   sec.scrollIntoView({ behavior: 'smooth' });
 }
 
-function copyDiscordPlan() {
-  const s = buildStrategy();
-  const { comp, B } = s;
-  let text = `🏆 **PLA DE PARTIDA — ${comp.name.toUpperCase()} (${state.ourSide} SIDE)**\n`;
-  text += `🆚 **Rival:** ${B.list.join(', ') || 'pendent'}\n`;
-  text += `📌 **Estil:** ${comp.style}\n\n`;
-  text += `🛣️ **LÍNIES:**\n`;
-  s.lanes.forEach(l => {
-    text += `• **${l.role}** (${l.player.name.split('#')[0]}): ${l.champ || '—'} vs ${l.enemyText} ${VERDICT_UI[l.verdict].icon}${l.notes.length ? ' (' + l.notes.join(', ') + ')' : ''}\n`;
-  });
-  if (s.laneSummary.length) text += s.laneSummary.map(t => `↳ ${t}\n`).join('');
-  text += `\n⏱️ **TIMINGS:**\n`;
-  text += `• **Early:** ${s.early}\n• **Mid:** ${s.mid}\n• **Late:** ${s.late}\n\n`;
-  text += `⚔️ **WIN CONDITION:** ${s.win.join(' ')}\n`;
-  s.tf.slice(0, 4).forEach(t => { text += `• ${t}\n`; });
-  if (s.threats.length) {
-    text += `\n🚨 **AMENACES:** ` + s.threats.map(t => `${t.champ} (${t.txt})`).join(' | ') + `\n`;
-  }
-  text += `\n🎯 **ROLS INDIVIDUALS:**\n`;
-  s.individual.forEach(x => {
-    text += `• **${x.role} (${x.lane.player.name.split('#')[0]} - ${x.lane.champ || '—'}):** ${comp.plan.individual[x.role]}\n`;
-  });
-
-  text += phasePlanDiscord(s.phasePlan);
-  text += buildsDiscordText(s);
-
-  const parts = splitDiscord(text);
-  const out = parts.map((pt, i) => (i === 0 ? '' : `\n⸻ MISSATGE ${i + 1} ⸻\n`) + pt).join('');
-  navigator.clipboard.writeText(out).then(() => {
-    alert(parts.length > 1
-      ? `✅ Pla copiat en ${parts.length} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
-      : '✅ Pla de partida copiat al porta-retalls llest per enganxar a Discord!');
-  });
-}
 
 function renderRosterTable() {
   document.getElementById('rosterTableBody').innerHTML = ROSTER.map((p, pi) => `
@@ -409,25 +352,4 @@ function renderProTab() {
     <p style="font-size:0.74rem;color:var(--text-muted);margin-top:10px;">Truc del vídeo (Skill-Capped): si intercanvieu rols <em>després</em> dels bans, el ban deixa de coincidir amb el pick i el rival no endevina la lane; a més, un flex que feu passar per un altre rol (ciclant campions d'aquell rol) confon més. Els picks <em>neutrals</em> (Ornn, Shen, Syndra, Ahri, Jinx, Aphelios, Karma, Nami...) s'adapten a qualsevol comp: ideals per al blind. Ordre de solo queue: ADC, jungla, suport, mid i top al final (el top és on més pesen els matchups). Segon vídeo (Coach Rogue): les sinergies individuals pesen més que la comp "ideal": ganks = dany + CC (un jungla sense CC com Lee Sin necessita laners amb CC), jungla↔suport és la parella més important, i els ADC tenen arquetip (Samira només amb engage, Caitlyn amb poke/enchanter, Jinx/Aphelios neutres). Obriu amb un pick neutral o d'impacte i després copieu el rival: contrapickeu rol a rol fins al final. Un pick dolent contra un estil (Darius contra abast) pot funcionar si els vostres aliats cobreixen la debilitat. Comfort és rei: no forceu un jugador a un pick que no domina.<br>Heurística: puntuació = flex real ×9 + flex públic ×4 + tier 26.22 − counters coneguts ×3 − reactiu −8. Els counters coneguts són una llista editable limitada (LANE_COUNTERS).</p>`;
 }
 
-function renderCompsRanking(ranked) {
-  const LIMIT = 8;
-  const list = state.showAllComps ? ranked : ranked.slice(0, LIMIT);
-  const sel = state.selectedCompId && !list.some(c => c.id === state.selectedCompId) ? ranked.find(c => c.id === state.selectedCompId) : null;
-  if (sel) list.push(sel);
-  const cards = list.map(comp => {
-    const isSel = state.selectedCompId === comp.id;
-    const summaryChamps = ROLE_ORDER.map(r => comp.roles[r][0]).join(' / ');
-    return `<div class="comp-card ${isSel ? 'selected-comp' : ''}" onclick="toggleSelectComp(${comp.id})">
-      <div class="comp-top">
-        <strong style="font-size:0.84rem;color:var(--gold-light);">${comp.name}</strong>
-        <span class="score-pill">${comp.score}% Match</span>
-      </div>
-      <div class="comp-champs">${summaryChamps}</div>
-      <div class="comp-meta">${comp.reasons.slice(0, 3).join(' • ') || comp.style}</div>
-    </div>`;
-  }).join('');
-  const more = ranked.length > LIMIT
-    ? `<div style="text-align:center;margin-top:6px;"><button class="btn" onclick="state.showAllComps=!state.showAllComps;renderAll()">${state.showAllComps ? 'Mostra\'n menys' : `Mostra totes (${ranked.length})`}</button></div>` : '';
-  document.getElementById('compsRanking').innerHTML = cards + more;
-}
 

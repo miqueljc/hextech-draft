@@ -57,32 +57,6 @@ const STRUCT_SYN = [
   [x => hasTag(x, 'ap') && !hasTag(x, 'ad'), c => hasTag(c, 'ad') && !hasTag(c, 'ap'), 1, 'complementa el dany (AD/AP)']
 ];
 const LANE_PAIR = [['Bot', 'Sup'], ['Jg', 'Mid'], ['Jg', 'Sup'], ['Jg', 'Top']];
-function synergyCandidates(x, max = 3) {
-  const unavail = getUnavailableChamps();
-  const dx = roleDistOfChamp(x);
-  const rx = ROLE_ORDER.filter((r, i) => dx[i] >= 0.3);
-  const poolBy = new Map();
-  ROSTER.forEach((pl, pi) => playerRoles(pi).forEach(r => poolOf(pi, r).forEach(c => { if (!poolBy.has(c)) poolBy.set(c, new Set()); poolBy.get(c).add(pi); })));
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (c === x || !CHAMP_DATA[c] || unavail.has(c)) return;
-    if (distOverlap(roleDistOfChamp(c), dx) > 0.5) return; // ha de ser d'un altre rol
-    let pts = 0, why = [], src = null;
-    const w = synergyOf(x, c);
-    if (w) { pts += w * 2; why.push('parella recomanada'); src = SYN_SRC[synKey(x, c)] || 'sinergies editades'; }
-    if (ANTI_PAIRS.some(([a, b]) => (a === x && b === c) || (a === c && b === x))) pts -= 20;
-    let st = 0; const sw = [];
-    STRUCT_SYN.forEach(([fx, fc, p, txt]) => { if (fx(x) && fc(c) && !sw.includes(txt)) { st += p; sw.push(txt); } });
-    st = Math.min(st, 6); if (st) { pts += st; if (!src) why.push(...sw.slice(0, 2)); }
-    const rc = champRoles(c);
-    if (LANE_PAIR.some(([a, b]) => (rx.includes(a) && rc.includes(b)) || (rx.includes(b) && rc.includes(a)))) pts += 1;
-    if (pts <= 0) return;
-    const bt = bestTier(c); if (bt === 'S+') pts += 1;
-    const who = poolBy.get(c); if (who) pts += 2;
-    out.push({ champ: c, pts, why, src, who: who ? [...who].map(shortName) : [] });
-  });
-  return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-}
 function synergyTipHtml(x) {
   const list = synergyCandidates(x, 3);
   const enemy = getEnemyPicks().includes(x);

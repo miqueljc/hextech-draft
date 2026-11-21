@@ -5,29 +5,9 @@ function champRoles(c) {
   const d = CHAMP_DATA[c];
   return d ? d.roles.map(l => LETTER_ROLE[l]) : [];
 }
-function roleDistOfChamp(c) {
-  const rs = champRoles(c), d = [0, 0, 0, 0, 0];
-  rs.forEach(r => { d[ROLE_ORDER.indexOf(r)] += 1 / rs.length; });
-  return d;
-}
 function distOverlap(a, b) { return a.reduce((s, x, i) => s + x * b[i], 0); }
 
 // Màxim nombre de campions que es poden col·locar en rols diferents (rols naturals)
-function maxRoleMatching(champs) {
-  const matchRole = [-1, -1, -1, -1, -1];
-  const tryAssign = (i, seen) => {
-    for (const rn of champRoles(champs[i])) {
-      const r = ROLE_ORDER.indexOf(rn);
-      if (seen[r]) continue;
-      seen[r] = true;
-      if (matchRole[r] === -1 || tryAssign(matchRole[r], seen)) { matchRole[r] = i; return true; }
-    }
-    return false;
-  };
-  let m = 0;
-  for (let i = 0; i < champs.length; i++) if (tryAssign(i, [false, false, false, false, false])) m++;
-  return m;
-}
 
 function permutations(a) {
   if (a.length <= 1) return [a];
@@ -37,47 +17,6 @@ const PLAYER_PERMS = permutations([0, 1, 2, 3, 4]);
 
 // ---- Rival: tots els repartiments de rols que tenen sentit ----
 const _enemyCache = new Map();
-function enemyRoleInfo() {
-  const champs = getEnemyPicks().filter(Boolean);
-  const locks = state.enemyLocks || {};
-  const key = champs.map(c => c + ':' + (locks[c] || '')).join('|');
-  if (_enemyCache.has(key)) return _enemyCache.get(key);
-
-  function enumerate(useLocks) {
-    let minCost = Infinity, list = [];
-    const taken = [false, false, false, false, false], cur = [];
-    (function rec(i, cost) {
-      if (cost > minCost) return;
-      if (i === champs.length) {
-        if (cost < minCost) { minCost = cost; list = []; }
-        list.push([...cur]);
-        return;
-      }
-      const c = champs[i], lock = useLocks ? locks[c] : null;
-      for (let r = 0; r < 5; r++) {
-        if (taken[r]) continue;
-        if (lock && ROLE_ORDER[r] !== lock) continue;
-        const natural = lock ? true : champRoles(c).includes(ROLE_ORDER[r]);
-        taken[r] = true; cur[i] = r;
-        rec(i + 1, cost + (natural ? 0 : 1));
-        taken[r] = false;
-      }
-    })(0, 0);
-    return list;
-  }
-  let list = enumerate(true);
-  if (!list.length) list = enumerate(false); // locks contradictoris: s'ignoren
-
-  const dist = {};
-  champs.forEach((c, i) => {
-    const d = [0, 0, 0, 0, 0];
-    list.forEach(asg => { d[asg[i]] += 1 / list.length; });
-    dist[c] = d;
-  });
-  const info = { champs, count: list.length, dist, ambiguous: champs.some(c => dist[c].filter(x => x > 0.001).length > 1) };
-  _enemyCache.set(key, info);
-  return info;
-}
 
 // ---- Jugadors multi-rol: cada jugador té un pool de campions per cada rol que pot jugar ----
 const ROLEPOOL_LS_KEY = 'hextech_rolepools_v1';
@@ -122,7 +61,7 @@ function playerRoles(p) { return ROLE_ORDER.filter(r => playsRole(p, r)); }
 function shortName(p) { return ROSTER[p].name.split('#')[0]; }
 
 // Rols on algú de l'equip pot jugar un campió (flex REAL nostre)
-function ourRolesFor(c) {
+function ourRolesFor__base(c) {
   const s = new Set();
   ROSTER.forEach((pl, p) => ROLE_ORDER.forEach(r => { if (poolOf(p, r).includes(c)) s.add(r); }));
   return ROLE_ORDER.filter(r => s.has(r));
@@ -156,8 +95,6 @@ function feasibleCount(champs) {
 // ---- Lògica de draft professional ----
 // Pes de la "informació" segons quants picks nostres ja hi ha (el primer pick revela més que l'últim)
 const PHASE_W = [1, 0.8, 0.5, 0.2, 0];
-function blindWeakness(c) { return Object.keys(LANE_COUNTERS).filter(e => LANE_COUNTERS[e].includes(c)).length; }
-function isReactive(c) { return Object.prototype.hasOwnProperty.call(LANE_COUNTERS, c); }
 function flexScoreOf(c) {
   const my = ourRolesFor(c).length, pub = champRoles(c).length, bt = bestTier(c);
   return 9 * Math.max(0, my - 1) + 4 * Math.max(0, pub - 1) + (bt ? TIER_PTS[bt] : 0) - 3 * blindWeakness(c) - (isReactive(c) ? 8 : 0);
@@ -167,7 +104,7 @@ function phaseOf(c) {
   if ((isReactive(c) && my.length < 2) || (my.length === 1 && pub <= 1 && bt !== 'S+')) return 3;
   return flexScoreOf(c) >= 12 ? 1 : 2;
 }
-function phaseAdviceHtml(k) {
+function phaseAdviceHtml__base(k) {
   if (k <= 1) return `<br><span style="color:var(--gold);">🧠 Fase 1 (informació mínima):</span> tria <strong>flex</strong> i picks <strong>segurs a cegues</strong>; guarda per al final els picks d'un sol rol i els reactius (Pyke, Malphite, Poppy…). Tot el que triïs ho veurà el rival.`;
   if (k <= 3) return `<br><span style="color:var(--gold);">🧠 Fase 2:</span> ja heu mostrat bastant; completa el que falta (frontline / engage / dany) i comença a respondre als seus picks. Deixa <strong>1-2 rols oberts</strong> per decidir el final.`;
   return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
@@ -180,7 +117,7 @@ function playerRoleScore(p, r) {
   if (!playsRole(p, role)) return -8;
   return pl.roleShare && pl.roleShare[role] >= 30 ? 6 : 3;
 }
-function playerChampFit(p, r, c) {
+function playerChampFit__base(p, r, c) {
   const pl = ROSTER[p], role = ROLE_ORDER[r];
   let s = 0;
   if (poolOf(p, role).includes(c)) {

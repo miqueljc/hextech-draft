@@ -9,10 +9,8 @@ function loadRealData() {
   ROLE_RATES = (r && typeof r === 'object') ? r : ROLE_RATES_DEFAULT;
   _cby = new Map();
 }
-const _afterDataChangeBase = afterDataChange;
-afterDataChange = function () { loadRealData(); _afterDataChangeBase(); };
-const _clearCachesBase = clearCaches;
-clearCaches = function () { _clearCachesBase(); _cby = new Map(); };
+function afterDataChange__n() { loadRealData(); afterDataChange__base(); }
+function clearCaches() { clearCaches__base(); _cby = new Map(); }
 
 function adjWR(wr, g, k) { return 50 + (wr - 50) * g / (g + (k || 60)); }
 // Avantatge de c contra e a la línia, en punts de WR (ajustat per mostra). real=true si ve de winrates reals.
@@ -41,14 +39,14 @@ function synScore(a, b) {
 }
 
 // Reactius de veritat: la llista curada original (Malphite, Poppy, Pyke...), no tots els campions amb dades
-blindWeakness = function (c) { const un = getUnavailableChamps(); return counteredBy(c).filter(e => !un.has(e)).length; };
-isReactive = function (c) {
+function blindWeakness(c) { const un = getUnavailableChamps(); return counteredBy(c).filter(e => !un.has(e)).length; }
+function isReactive(c) {
   if (!_reactive) _reactive = new Set(Object.keys((DEFAULTS && DEFAULTS.counters) || {}));
   return _reactive.has(c);
-};
+}
 
 // Repartiment de rols segons la taxa de pick real per rol (metabot.gg)
-roleDistOfChamp = function (c) {
+function roleDistOfChamp(c) {
   const r = ROLE_RATES[c], rs = champRoles(c);
   if (r) {
     const v = r.map((x, i) => Math.max(x || 0, rs.includes(ROLE_ORDER[i]) ? 0.05 : 0));
@@ -58,8 +56,8 @@ roleDistOfChamp = function (c) {
   const d = [0, 0, 0, 0, 0];
   rs.forEach(x => { d[ROLE_ORDER.indexOf(x)] += 1 / rs.length; });
   return d;
-};
-enemyRoleInfo = function () {
+}
+function enemyRoleInfo() {
   const champs = getEnemyPicks().filter(Boolean), locks = state.enemyLocks || {};
   const key = 'N|' + champs.map(c => c + ':' + (locks[c] || '')).join('|');
   if (_enemyCache.has(key)) return _enemyCache.get(key);
@@ -80,7 +78,7 @@ enemyRoleInfo = function () {
   const info = { champs, count: res.count, dist: res.dist, ambiguous: champs.some(c => res.dist[c].filter(x => x > 0.15).length > 1) };
   _enemyCache.set(key, info);
   return info;
-};
+}
 // Probabilitat que cada rol del rival encara estigui per cobrir
 function enemyMiss(info, enemy) {
   const m = [1, 1, 1, 1, 1];
@@ -137,13 +135,12 @@ function draftPos() {
   const nextOurs = Boolean(ours && nx && nx.type === 'PICK' && nx.side === state.ourSide && !getOurPicks()[nx.index] && !getOurPicks()[index]);
   return { enemyAfter, nextOurs, nextIdx: nextOurs ? nx.index : -1 };
 }
-const _phaseAdviceBase = phaseAdviceHtml;
-phaseAdviceHtml = function (k) {
+function phaseAdviceHtml(k) {
   const pos = draftPos();
   if (pos.enemyAfter === 0) return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
   if (k >= 3) return `<br><span style="color:var(--gold);">🧠 Pick final vostre, però el rival encara en té ${pos.enemyAfter}:</span> us pot respondre. Eviteu picks que tinguin counters disponibles al rol que li falta i guardeu el counter-pick per a l'últim slot si en teniu.`;
-  return _phaseAdviceBase(k);
-};
+  return phaseAdviceHtml__base(k);
+}
 
 // ---- Fitxa del rival (scouting) ----
 const SCOUT_KEY = 'hextech_enemyscout_v1';
@@ -178,7 +175,7 @@ function scoutPool() {
   _scoutCache = m; return m;
 }
 function scoutText(s) { return `${s.who}: ${s.games} partides${s.wr && s.wr !== 50 ? ', ' + s.wr + '%' : ''}`; }
-function scoutAnalyze() {
+function scoutAnalyze__base() {
   state.scout.team = (document.getElementById('scoutTeam') || {}).value || '';
   state.scout.players.forEach((p, i) => {
     const n = document.getElementById('scoutName_' + i), t = document.getElementById('scoutText_' + i), r = document.getElementById('scoutRole_' + i);
@@ -196,7 +193,7 @@ function scoutClear() {
 }
 let _scoutOpen = false;
 function toggleScout() { _scoutOpen = !_scoutOpen; renderScout(); }
-function renderScout() {
+function renderScout__base() {
   const el = document.getElementById('scoutPanel'); if (!el) return;
   const s = state.scout, n = s.players.filter(p => p.champs.length).length;
   const summary = n
@@ -214,34 +211,20 @@ function renderScout() {
       <div style="font-size:0.8rem;font-weight:700;color:#FF8A9B;">📋 Fitxa del rival${s.team ? ': ' + escapeHtml(s.team) : ''}</div>
       <button class="btn" onclick="toggleScout()">${_scoutOpen ? 'Tanca' : (n ? '✏️ Edita' : '➕ Omple')}</button></div>${summary}${form}`;
 }
-const _updateEnemyOtpsBase = updateEnemyOtps;
-updateEnemyOtps = function () {
-  _updateEnemyOtpsBase();
+function updateEnemyOtps() {
+  updateEnemyOtps__base();
   const inp = document.getElementById('enemyOtpInput');
   if (inp && state.scout) { state.scout.otps = inp.value; saveScout(); }
-};
+}
 (function restoreOtps() { const inp = document.getElementById('enemyOtpInput'); if (inp) inp.value = (state.scout && state.scout.otps) || ''; })();
 
 // ---- Historial de drafts propis (resultat) ----
 const HIST_KEY = 'hextech_drafthist_v1';
 function loadHist() { try { const h = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } }
 let DRAFT_HIST = loadHist(), _teamRec = null;
-function saveHist() { try { localStorage.setItem(HIST_KEY, JSON.stringify(DRAFT_HIST)); } catch (e) {} _teamRec = null; _assignCache.clear(); }
-function teamRec(p, c) {
-  if (!_teamRec) {
-    _teamRec = new Map();
-    DRAFT_HIST.forEach(h => (h.roles || []).forEach(x => {
-      if (!x.champ || !x.player) return;
-      const k = x.player + '|' + x.champ, v = _teamRec.get(k) || { w: 0, l: 0 };
-      if (h.result === 'W') v.w++; else v.l++;
-      _teamRec.set(k, v);
-    }));
-  }
-  return _teamRec.get(ROSTER[p].name + '|' + c) || null;
-}
+function saveHist__base() { try { localStorage.setItem(HIST_KEY, JSON.stringify(DRAFT_HIST)); } catch (e) {} _teamRec = null; _assignCache.clear(); }
 function teamRecBonus(p, c) { const r = teamRec(p, c); if (!r || r.w + r.l < 2) return 0; return Math.round(((r.w + 3) / (r.w + r.l + 6) - 0.5) * 30); }
-const _playerChampFitBase = playerChampFit;
-playerChampFit = function (p, r, c) { return _playerChampFitBase(p, r, c) + teamRecBonus(p, c); };
+function playerChampFit(p, r, c) { return playerChampFit__base(p, r, c) + teamRecBonus(p, c); }
 function recordDraft(result) {
   const us = getOurPicks().filter(Boolean);
   if (!us.length) return false;
@@ -254,8 +237,7 @@ function recordDraft(result) {
   saveHist(); renderHistory(); return true;
 }
 function saveDraftResult(result) { if (recordDraft(result)) { const el = document.getElementById('histSaved'); if (el) el.textContent = `✅ Desat (${result === 'W' ? 'victòria' : 'derrota'}). Total: ${DRAFT_HIST.length} drafts.`; } }
-const _closeGameBase = closeGame;
-closeGame = function (result) { recordDraft(result); _closeGameBase(result); };
+function closeGame(result) { recordDraft(result); closeGame__base(result); }
 function deleteHist(i) { DRAFT_HIST.splice(i, 1); saveHist(); renderHistory(); renderAll(); }
 function clearHist() { if (!DRAFT_HIST.length) return; DRAFT_HIST = []; saveHist(); renderHistory(); renderAll(); }
 function exportHist() {
@@ -263,7 +245,7 @@ function exportHist() {
   const done = () => { const el = document.getElementById('histMsg'); if (el) el.textContent = '📋 Historial copiat (JSON). Envia-me\'l si vols que el publiqui a les dades compartides.'; };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, done); else done();
 }
-function renderHistory() {
+function renderHistory__base() {
   let el = document.getElementById('histPanel');
   if (!el) { const tab = document.getElementById('tab-data'); if (!tab) return; el = document.createElement('div'); el.id = 'histPanel'; el.className = 'panel'; el.style.marginTop = '12px'; tab.appendChild(el); }
   const w = DRAFT_HIST.filter(h => h.result === 'W').length, n = DRAFT_HIST.length;
@@ -279,7 +261,7 @@ function renderHistory() {
 }
 
 // ---- Recomanació de picks (substitueix l'anterior) ----
-recommendChamps = function (ctx, excludeIdx) {
+function recommendChamps__n(ctx, excludeIdx) {
   ctx = ctx || buildCtx();
   const slots = getOurPicks();
   const ally = slots.filter((c, i) => c && i !== excludeIdx);
@@ -431,10 +413,10 @@ recommendChamps = function (ctx, excludeIdx) {
     out.push({ champ: c, score, why });
   });
   return out.sort((a, b) => b.score - a.score);
-};
+}
 
 // ---- Bans ----
-recommendBans = function (ctx) {
+function recommendBans(ctx) {
   const ours = ctx.ourPicks, enemy = ctx.enemyPicks;
   const info = enemyRoleInfo(), miss = enemyMiss(info, enemy);
   const phase2 = ours.length + enemy.length > 0;
@@ -476,10 +458,10 @@ recommendBans = function (ctx) {
     out.push({ champ: c, score, why });
   });
   return out.sort((a, b) => b.score - a.score);
-};
+}
 
 // ---- Predicció del rival ----
-predictEnemy = function (ctx) {
+function predictEnemy(ctx) {
   const enemy = ctx.enemyPicks, ours = ctx.ourPicks;
   const eSide = state.ourSide === 'BLUE' ? 'RED' : 'BLUE';
   const unavailable = getUnavailableChamps(eSide);
@@ -519,14 +501,14 @@ predictEnemy = function (ctx) {
   const z = top.reduce((s, x) => s + Math.exp(x.score / 7), 0);
   top.forEach(x => { x.prob = Math.exp(x.score / 7) / z; });
   return top;
-};
-ourAnswersTo = function (enemyChamp, ctx) {
+}
+function ourAnswersTo(enemyChamp, ctx) {
   const pool = [...new Set(ROSTER.flatMap(p => p.pool))];
   return pool.filter(c => !ctx.unavailable.has(c)).map(c => ({ c, a: muScore(c, enemyChamp).adv })).filter(x => x.a >= 2.5 && distOverlap(roleDistOfChamp(x.c), roleDistOfChamp(enemyChamp)) > 0.15).sort((a, b) => b.a - a.a).slice(0, 2).map(x => x.c);
-};
+}
 
 // ---- Matchups de línia i tooltips amb WR real ----
-laneMatchup = function (c, e, role) {
+function laneMatchup__n(c, e, role) {
   let score = 0;
   const notes = [];
   const m = muScore(c, e);
@@ -550,8 +532,8 @@ laneMatchup = function (c, e, role) {
   if (tc - tt >= 6) { score += 1; notes.push(`meta ${PATCH_META.tierSource || PATCH_META.patch}: ${c} ${tierIn(c, role) || '—'} vs ${e} ${tierIn(e, role) || '—'}`); }
   if (tt - tc >= 6) { score -= 1; notes.push(`meta ${PATCH_META.tierSource || PATCH_META.patch}: ${e} ${tierIn(e, role) || '—'} vs ${c} ${tierIn(c, role) || '—'}`); }
   return { score, notes };
-};
-counterCandidates = function (e, max = 3) {
+}
+function counterCandidates(e, max = 3) {
   const unavail = getUnavailableChamps();
   const info = enemyRoleInfo();
   const dist = ((info.dist && info.dist[e]) || roleDistOfChamp(e)).slice();
@@ -579,13 +561,13 @@ counterCandidates = function (e, max = 3) {
     out.push({ champ: c, pts: Math.round(pts * (0.6 + 0.4 * Math.min(1, ov))), why, src, who: who ? [...who].map(shortName) : [] });
   });
   return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-};
-realMatchupNote = function (c, e) {
+}
+function realMatchupNote(c, e) {
   const m = muScore(c, e);
   if (m.adv <= -2) return m.real ? `${e} et counteja: teniu ${m.wr}% en ${m.g} partides` : `${e} et counteja segons les llistes`;
   if (m.adv >= 2) return m.real ? `tu counteges ${e}: ${m.wr}% en ${m.g} partides` : `tu counteges ${e} segons les llistes`;
   return '';
-};
+}
 
 // ---- Picks dobles: millor parella ----
 function pairRecs(ctx, i1, i2, n) {
@@ -619,15 +601,13 @@ function saveResultHtml() {
   if (all < 10) return '';
   return `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="color:var(--text-muted);">💾 Desa el resultat al vostre historial:</span><button class="btn" onclick="saveDraftResult('W')">✅ Victòria</button><button class="btn" onclick="saveDraftResult('L')">❌ Derrota</button><span id="histSaved" style="color:var(--text-muted);"></span></div>`;
 }
-const _getLiveAdviceBase = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  let h = _getLiveAdviceBase(ranked);
+function getLiveAdvice__n(ranked) {
+  let h = getLiveAdvice__base(ranked);
   try { h += pairAdviceHtml() + saveResultHtml(); } catch (e) { console.warn('pairAdvice', e); }
   return h;
-};
+}
 
-const _predictionHtmlBase = predictionHtml;
-predictionHtml = function (ctx, max) { if (draftPos().enemyAfter === 0 || ctx.enemyPicks.length >= 5) return ''; return _predictionHtmlBase(ctx, max); };
+function predictionHtml(ctx, max) { if (draftPos().enemyAfter === 0 || ctx.enemyPicks.length >= 5) return ''; return predictionHtml__base(ctx, max); }
 // ---- Notes del parc: ja oficials ----
 PATCH_META.note = 'Notes oficials del 26.23 (Riot, 17/11/2026): els canvis aplicats coincideixen amb la versió final.';
 loadRealData();

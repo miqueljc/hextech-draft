@@ -81,138 +81,6 @@ function buildCtx() {
 }
 
 // ---- Recomanació de campions: només depèn dels picks aliats i enemics ----
-function recommendChamps(ctx, excludeIdx) {
-  ctx = ctx || buildCtx();
-  const slots = getOurPicks();
-  const ally = slots.filter((c, i) => c && i !== excludeIdx);
-  const allyProf = teamProfile(ally);
-  const enemyProf = teamProfile(ctx.enemyPicks);
-  const info = enemyRoleInfo();
-
-  const poolUnion = new Map();
-  ROSTER.forEach((pl, pi) => pl.pool.forEach(c => {
-    if (!poolUnion.has(c)) poolUnion.set(c, []);
-    poolUnion.get(c).push(pi);
-  }));
-  const cands = new Set(poolUnion.keys());
-  Object.values(ctx.comp.roles).flat().forEach(c => cands.add(c));
-  const covered = new Set();
-  ally.forEach(c => champRoles(c).forEach(r => covered.add(r)));
-
-  const out = [];
-  cands.forEach(c => {
-    if (ctx.unavailable.has(c) || !CHAMP_DATA[c]) return;
-    let score = 0;
-    const why = [];
-    const add = (pts, txt, style) => { score += pts; why.push({ pts, txt, style }); };
-    const t = tag => hasTag(c, tag);
-
-    // Disponibilitat a l'equip (qualsevol jugador, sense fixar rol)
-    const who = poolUnion.get(c) || [];
-    if (who.length) {
-      const names = who.slice(0, 2).map(pi => ROSTER[pi].name.split('#')[0]).join('/');
-      add(16, `al pool de ${names}${who.length > 2 ? '…' : ''}`);
-      let bonus = 0, bestP = -1, bestR = -99;
-      who.forEach(pi => {
-        const pl = ROSTER[pi];
-        let b = pl.excelMains.includes(c) ? 8 : 0;
-        const h = pl.opggHighlights.find(x => x.champ === c);
-        const hasStat = Boolean(champStat(pi, c));
-        if (hasStat) b = Math.max(b, Math.round(champRating(pi, c) * 0.7 * formMul(pi)));
-        else if (h) b = Math.max(b, Math.round(h.bonus * 0.6));
-        if (hasStat && champRating(pi, c) > bestR) { bestR = champRating(pi, c); bestP = pi; }
-        bonus = Math.max(bonus, b);
-      });
-      if (bonus > 0) add(bonus, bestP >= 0 && bestR >= 4 ? `bon historial: ${shortName(bestP)} ${statText(bestP, c)}` : 'main / bon WR real');
-      if (bestP >= 0 && bestR <= -6 && who.every(pi => !champStat(pi, c) || champRating(pi, c) <= -6)) add(-8, `historial negatiu: ${shortName(bestP)} ${statText(bestP, c)}`);
-    } else add(-14, 'ningú de l\'equip el té al pool');
-
-    // Comp objectiu
-    if (Object.values(ctx.comp.roles).some(l => l.includes(c))) add(14, `encaixa a ${ctx.comp.name.split(':')[0]}`);
-
-    // Valor del pick al parc: meta 26.22 + canvis 26.23
-    const bt = bestTier(c);
-    if (bt) add(TIER_PTS[bt], `${bt} al meta del ${PATCH_META.tierSource}`);
-    const pch = PATCH_CHANGES[c];
-    if (pch) add(pch.delta, `${pch.delta > 0 ? 'buff' : 'nerf'} al 26.23`);
-
-    // Draft professional: flex, informació i seguretat a cegues (pesa més als primers picks)
-    const k = ally.length, W = PHASE_W[Math.min(k, 4)];
-    const myRoles = ourRolesFor(c), pubRoles = champRoles(c);
-    if (W > 0) {
-      if (myRoles.length >= 2) add(Math.round(W * (4 + 4 * Math.min(myRoles.length - 1, 2))), `flex real (${myRoles.join('/')}): el rival no sap on anirà`);
-      else if (myRoles.length === 1 && pubRoles.length <= 1 && W >= 0.5) add(-Math.round(W * 5), `només ${myRoles[0]}: revela rol i jugador massa aviat`);
-      if (pubRoles.length >= 2 && myRoles.length < 2) add(Math.round(W * 3), `flex públic (${pubRoles.join('/')})`);
-      const weak = blindWeakness(c);
-      if (weak >= 1) add(-Math.round(W * Math.min(8, weak * 3)), `counterejable a cegues (${weak} counters coneguts)`);
-      else if (bt === 'S+' || bt === 'S') add(Math.round(W * 4), 'segur a cegues i fort al parc');
-      if (isReactive(c) && myRoles.length < 2 && W >= 0.5) add(-Math.round(W * 5), 'pick reactiu: guarda\'l per respondre al final');
-      if (bt === 'S+') add(Math.round(W * 4), 'alta prioritat: neguem el pick al rival');
-    }
-    if (state.enemyOtps.includes(c)) add(8, 'nega el main d\'un rival');
-    if (state.fearless) { const dp = fearlessDepth(c); if (dp !== Infinity && dp <= 4) add(dp <= 2 ? -8 : -4, `Fearless: només us queden ${dp} campions al pool d'aquest rol`); }
-    if (who.length && k >= 2 && feasibleCount([...ally, c]) < feasibleCount(ally) + 1) add(-10, 'cap jugador el pot jugar sense trencar els altres picks');
-
-    // Cobertura de rols (flexible, sense assignar encara)
-    const m = maxRoleMatching([...ally, c]);
-    if (m <= maxRoleMatching(ally)) add(-25, 'no aporta cap rol nou: no quedarien rols per a tots els picks');
-    else {
-      if (champRoles(c).some(r => !covered.has(r))) add(8, 'cobreix un rol encara per cobrir');
-      if (ally.length >= 3 && who.length && feasibleCount([...ally, c]) === feasibleCount(ally) + 1) add(6, 'omple un rol amb jugador disponible');
-    }
-
-    // Necessitats del draft aliat
-    if (allyProf.front === 0 && t('front')) add(10, 'aporta la frontline que falta');
-    if (allyProf.front >= 3 && t('front')) add(-5, 'ja teniu prou frontline');
-    if (allyProf.eng === 0 && t('eng')) add(8, 'aporta engage');
-    if (allyProf.peel === 0 && allyProf.n >= 3 && t('peel')) add(5, 'aporta peel pel carry');
-    if (allyProf.eng >= 1 && t('combo')) add(4, 'combo AoE amb el vostre engage');
-    if (allyProf.ad >= 2 && allyProf.ap === 0 && t('ap')) add(8, 'equilibra el dany (falta AP)');
-    if (allyProf.ap >= 2 && allyProf.ad === 0 && t('ad')) add(8, 'equilibra el dany (falta AD)');
-    if (allyProf.ad >= 3 && allyProf.ap === 0 && t('ad') && !t('ap')) add(-8, 'massa dany AD');
-    if (allyProf.ap >= 3 && allyProf.ad === 0 && t('ap') && !t('ad')) add(-8, 'massa dany AP');
-
-    // Draft enemic: counters de lane ponderats per la probabilitat que coincideixin de rol
-    const cd = roleDistOfChamp(c);
-    const lateMul = k >= 3 ? 1.4 : 1;
-    ctx.enemyPicks.forEach(e => {
-      const ov = distOverlap(cd, info.dist[e] || roleDistOfChamp(e));
-      if (ov < 0.15) return;
-      const cond = ov < 0.9 ? ` (si coincideixen de rol, ${Math.round(ov * 100)}%)` : '';
-      if ((LANE_COUNTERS[c] || []).includes(e)) add(Math.max(3, Math.round(14 * ov * lateMul)), `counter de lane contra ${e}${cond}`);
-      if ((LANE_COUNTERS[e] || []).includes(c)) add(-Math.max(3, Math.round(14 * ov * lateMul)), `${e} el counteja a la lane${cond}`);
-      if ((EXT_COUNTERS[e] || []).includes(c)) add(Math.max(4, Math.round(12 * ov * lateMul)), `counter segons dades externes contra ${e}${cond}`, 'vs');
-      if ((EXT_COUNTERS[c] || []).includes(e)) add(-Math.max(3, Math.round(10 * ov * lateMul)), `${e} el counteja segons dades externes${cond}`);
-    });
-
-    // Draft enemic: identitat de l'equip
-    if (enemyProf.dive + enemyProf.assn >= 2) {
-      if (t('peel')) add(6, 'peel contra el seu dive/assassins');
-      if (t('front')) add(4, 'absorbeix el seu dive');
-    }
-    if (enemyProf.poke >= 2) {
-      if (t('eng')) add(8, 'engage contra el seu poke');
-      if (t('dive')) add(4, 'dive contra el seu poke');
-      if (t('poke') && !t('eng')) add(-4, 'perd el duel de poke');
-    }
-    if (enemyProf.eng >= 2) {
-      if (t('peel')) add(6, 'peel contra el seu engage');
-      if (t('mob')) add(3, 'mobilitat per esquivar el seu engage');
-    }
-    if (enemyProf.n >= 3 && enemyProf.mob <= 1) {
-      if (t('eng')) add(5, 'rival sense mobilitat: engage');
-      if (t('combo')) add(5, 'rival sense mobilitat: combo AoE');
-    }
-    if (enemyProf.n >= 3 && enemyProf.front === 0) {
-      if (t('dive') || t('assn')) add(5, 'rival sense frontline: accés al backline');
-    }
-
-    styleRules(c, ally, allyProf, enemyProf, add);
-    styleRules2(c, ally, allyProf, enemyProf, add);
-    out.push({ champ: c, score, why });
-  });
-  return out.sort((a, b) => b.score - a.score);
-}
 
 function getActiveRecs(ctx) {
   const { type, side, index } = state.activeSlot;
@@ -252,7 +120,7 @@ function draftSnapshotText(A, B, ourChamps) {
   return parts.length ? `<br><span style="color:var(--text-muted);">${parts.join(' ')}</span>` : '';
 }
 
-function getLiveAdvice(rankedComps) {
+function getLiveAdvice__base(rankedComps) {
   const ctx = buildCtx();
   ctx.ranked = rankedComps;
   ctx.comp = pickComp(rankedComps);

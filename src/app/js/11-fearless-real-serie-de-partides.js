@@ -25,7 +25,7 @@ function updateFearlessBtn() {
   btn.textContent = state.fearless ? `⚔️ Fearless: ON (partida ${n + 1})` : '⚔️ Fearless: OFF';
   btn.className = state.fearless ? 'btn btn-active-red' : 'btn';
 }
-function closeGame(result) {
+function closeGame__base(result) {
   state.series.games.push({
     n: state.series.games.length + 1, ourSide: state.ourSide, result,
     us: getOurPicks().filter(Boolean), enemy: getEnemyPicks().filter(Boolean)

@@ -6,18 +6,16 @@
 let TEAM_ROLES = {};
 function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : {}; }
 loadTeamRoles();
-const _afterDataChangeBaseQ = afterDataChange;
-afterDataChange = function () { loadTeamRoles(); _afterDataChangeBaseQ(); };
+function afterDataChange__q() { loadTeamRoles(); afterDataChange__n(); }
 function viableRoles(c) {
   const pub = champRoles(c), extra = (TEAM_ROLES[c] || []).filter(r => ROLE_ORDER.includes(r));
   let v = pub;
   if (ROLE_RATES[c]) { const d = roleDistOfChamp(c), w = ROLE_ORDER.filter((r, i) => d[i] >= 0.05); if (w.length) v = w; }
   return extra.length ? ROLE_ORDER.filter(r => v.includes(r) || extra.includes(r)) : v;
 }
-const _ourRolesForBaseQ = ourRolesFor;
-ourRolesFor = function (c) { const b = _ourRolesForBaseQ(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; };
+function ourRolesFor(c) { const b = ourRolesFor__base(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; }
 // Quants picks poden tenir rol propi alhora, només amb rols viables (Corki, Smolder, Varus... compten com a Bot)
-maxRoleMatching = function (champs) {
+function maxRoleMatching(champs) {
   const matchRole = [-1, -1, -1, -1, -1];
   const roles = champs.map(viableRoles);
   const tryAssign = (i, seen) => {
@@ -32,17 +30,17 @@ maxRoleMatching = function (champs) {
   let m = 0;
   for (let i = 0; i < champs.length; i++) if (tryAssign(i, [false, false, false, false, false])) m++;
   return m;
-};
+}
 
 const TAG_FILTERS = [['eng', 'Engage'], ['poke', 'Poke'], ['scale', 'Escalat'], ['early', 'Early'], ['front', 'Frontline'], ['peel', 'Peel'], ['dive', 'Dive'], ['assn', 'Assassí'], ['combo', 'Combo AoE'], ['split', 'Split'], ['mob', 'Mobilitat'], ['rng', 'Rang'], ['ap', 'AP'], ['ad', 'AD']];
 state.tagFilters = new Set();
-setRoleFilter = function (role, pill) {
+function setRoleFilter(role, pill) {
   if (state.roleFilter === role && role !== 'ALL') role = 'ALL';
   state.roleFilter = role;
   const box = document.getElementById('roleFilters');
   if (box) box.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', (p.getAttribute('onclick') || '').includes(`'${role}'`)));
   renderChampGrid();
-};
+}
 function toggleTagFilter(tag) {
   if (state.tagFilters.has(tag)) state.tagFilters.delete(tag); else state.tagFilters.add(tag);
   renderTagFilters(); renderChampGrid();
@@ -58,17 +56,16 @@ function renderTagFilters() {
   el.innerHTML = TAG_FILTERS.map(([t, l]) => `<span class="pill ${state.tagFilters.has(t) ? 'active' : ''}" onclick="toggleTagFilter('${t}')">${l}</span>`).join('')
     + (state.tagFilters.size ? '<span class="pill pill-clear" onclick="clearTagFilters()">✕ Treu estils</span>' : '');
 }
-const _renderChampGridBaseQ = renderChampGrid;
-renderChampGrid = function () {
-  _renderChampGridBaseQ();
+function renderChampGrid() {
+  renderChampGrid__base();
   const grid = document.getElementById('champGrid');
   if (grid && state.tagFilters.size && !grid.querySelector('.champ-chip')) {
     grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.8rem;padding:8px;">Cap campió amb tots aquests estils (${[...state.tagFilters].map(t => (TAG_FILTERS.find(x => x[0] === t) || [t, t])[1]).join(' + ')})${state.roleFilter !== 'ALL' ? ' i aquest filtre' : ''}.</div>`;
   }
-};
+}
 
 // Sinergies amb duos reals inclosos
-synergyCandidates = function (x, max = 3) {
+function synergyCandidates(x, max = 3) {
   const unavail = getUnavailableChamps();
   const dx = roleDistOfChamp(x);
   const rx = ROLE_ORDER.filter((r, i) => dx[i] >= 0.3);
@@ -95,12 +92,12 @@ synergyCandidates = function (x, max = 3) {
     out.push({ champ: c, pts, why, src, real, who: who ? [...who].map(shortName) : [] });
   });
   return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-};
+}
 // Tooltip net: una fila de 3 icones per a counters i una per a sinergies
 function tipCell(c, metric, who) {
   return `<div class="ct-cell">${champIcon(c, 54)}<div class="ct-name">${escapeHtml(c)}</div>${metric ? `<div class="ct-met">${escapeHtml(metric)}</div>` : ''}${who && who.length ? `<div class="ct-who">👤 ${escapeHtml(who.join('/'))}</div>` : ''}</div>`;
 }
-counterTipHtml = function (e) {
+function counterTipHtml(e) {
   const list = counterCandidates(e, 3);
   const info = enemyRoleInfo(), dist = (info.dist && info.dist[e]) || roleDistOfChamp(e);
   const roles = ROLE_ORDER.filter((r, i) => dist[i] >= 0.25).join('/') || champRoles(e).join('/');
@@ -112,7 +109,7 @@ counterTipHtml = function (e) {
   return `<div class="ct-head">${champIcon(e, 26)} <strong>${escapeHtml(e)}</strong> <small>${escapeHtml(roles)}</small></div>
     <div class="ct-sec">🛡️ Counters</div>${cRow}
     <div class="ct-sec">🤝 Sinergies${enemy ? ' <small>(les voldran ells)</small>' : ''}</div>${sRow}`;
-};
+}
 (function qStyles() {
   const css = `
   .tag-pills { margin-top:-4px; }

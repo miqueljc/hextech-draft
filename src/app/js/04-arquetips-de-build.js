@@ -417,7 +417,7 @@ function bootsFor(c, role, arch, x, T) {
   return b;
 }
 
-function adviseBuild(c, role, x) {
+function adviseBuild__base(c, role, x) {
   const arch = archFor(c, role), T = BUILD_T[arch];
   const kind = (ARCH[c] || {}).kind || '';
   const [keystone, keyWhy] = T.key(c, role, x, kind);
@@ -489,30 +489,6 @@ function uggUrl(c, role) {
   return `https://u.gg/lol/champions/${slug}/build/${r}`;
 }
 
-function renderBuildsHtml(s) {
-  const blocks = s.lanes.filter(l => l.build).map(l => {
-    const b = l.build;
-    const situ = b.situ.length
-      ? `<br><strong>Adaptacions segons el rival:</strong> ${b.situ.map(z => `<em>${escapeHtml(z.why)}</em> → ${escapeHtml(z.item)}`).join(' · ')}`
-      : '';
-    const notes = b.notes.length ? `<br>${b.notes.map(n => `<span style="color:var(--text-muted);">• ${escapeHtml(n)}</span>`).join('<br>')}` : '';
-    return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:0.8rem;">
-      <div style="margin-bottom:3px;"><span class="role-tag">${l.role.toUpperCase()}</span> <strong>${escapeHtml(l.champ)}</strong>
-        <span style="color:var(--text-muted);">· ${escapeHtml(l.player.name.split('#')[0])} · plantilla: ${escapeHtml(b.label)}</span>
-        <a href="${escapeHtml(uggUrl(l.champ, l.role))}" target="_blank" rel="noopener" style="color:var(--blue);font-size:0.74rem;margin-left:6px;">stats reals (u.gg) ↗</a></div>
-      <strong>Runes:</strong> <span style="color:var(--gold);">${escapeHtml(b.keystone)}</span> (${escapeHtml(b.keyWhy)}) — ${escapeHtml(b.primary)}<br>
-      <strong>Secundari:</strong> ${escapeHtml(b.secondary)} · <strong>Shards:</strong> ${escapeHtml(b.shards)}<br>
-      <strong>Sums:</strong> ${escapeHtml(b.summoners)}<br>
-      <strong>Inici:</strong> ${escapeHtml(b.start)} · <strong>Botes:</strong> ${escapeHtml(b.boots)}<br>
-      ${b.order ? `<strong>Ordre de compra (per a aquesta partida):</strong><br>${b.order.map((o, i) => `<span style="margin-left:8px;">${i + 1}. <strong>${escapeHtml(o.item)}</strong> <span style="color:var(--text-muted);">— ${escapeHtml(o.why)}</span></span>`).join('<br>')}` : `<strong>Core:</strong> ${b.core.map(escapeHtml).join(' → ')}`}${b.order ? '' : situ}${notes}
-    </div>`;
-  }).join('');
-  return `<div class="strat-card" style="grid-column: 1 / -1;">
-    <h4>🛠️ Runes i build recomanades (segons els dos drafts)</h4>
-    <p style="color:var(--text-muted);font-size:0.74rem;margin-bottom:4px;">Plantilles per arquetip adaptades a la composició aliada i rival. Noms de runes i objectes contrastats amb les notes oficials de la Season 2 (26.9) i les notes oficials del 26.23; no són estadístiques per campió: confirma amb l'enllaç "stats reals".</p>
-    ${blocks || '<p>Assigna campions als rols per veure runes i build.</p>'}
-  </div>`;
-}
 
 function renderPatchNotesHtml(s) {
   if (!s.patchNotes.length) {

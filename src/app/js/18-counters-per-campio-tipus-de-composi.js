@@ -36,43 +36,6 @@ const STRUCT_RULES = [
   [e => hasTag(e, 'mob') && !hasTag(e, 'front'), c => hasTag(c, 'eng') || hasTag(c, 'combo'), 2, 'CC en cadena contra un campió mòbil'],
   [e => hasTag(e, 'front') && !hasTag(e, 'eng'), c => hasTag(c, 'rng') && hasTag(c, 'poke'), 2, 'el desgasta des de lluny']
 ];
-function counterCandidates(e, max = 3) {
-  const unavail = getUnavailableChamps();
-  const info = enemyRoleInfo();
-  const dist = ((info.dist && info.dist[e]) || roleDistOfChamp(e)).slice();
-  dist[3] = dist[4] = Math.max(dist[3], dist[4]); // bot i suport comparteixen lane
-  const poolBy = new Map();
-  ROSTER.forEach((pl, pi) => playerRoles(pi).forEach(r => poolOf(pi, r).forEach(c => { if (!poolBy.has(c)) poolBy.set(c, new Set()); poolBy.get(c).add(pi); })));
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (c === e || !CHAMP_DATA[c] || unavail.has(c)) return;
-    const ov = distOverlap(roleDistOfChamp(c), dist);
-    if (ov < 0.3) return;
-    let pts = 0, why = [], src = null;
-    if ((EXT_COUNTERS[e] || []).includes(c)) { pts += 14; why.push('counter segons dades'); src = EXT_SRC[e] || 'dades externes'; }
-    if ((LANE_COUNTERS[c] || []).includes(e)) { pts += 10; why.push('guanya la línia'); }
-    if ((LANE_COUNTERS[e] || []).includes(c) || (EXT_COUNTERS[c] || []).includes(e)) pts -= 14;
-    let st = 0; const sw = [];
-    STRUCT_RULES.forEach(([fe, fc, p, txt]) => { if (fe(e) && fc(c)) { st += p; sw.push(txt); } });
-    st = Math.min(st, 7);
-    if (st) { pts += st; if (!src) why.push(...sw.slice(0, 2)); }
-    if (pts < 4) return;
-    const bt = bestTier(c); if (bt === 'S+') pts += 2; else if (bt === 'S') pts += 1;
-    if (PATCH_CHANGES[c] && PATCH_CHANGES[c].delta < 0) pts -= 1;
-    const who = poolBy.get(c);
-    if (who) pts += 3;
-    out.push({ champ: c, pts: Math.round(pts * (0.6 + 0.4 * ov)), why, src, who: who ? [...who].map(shortName) : [] });
-  });
-  return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-}
-function counterTipHtml(e) {
-  const list = counterCandidates(e, 3);
-  const info = enemyRoleInfo(), dist = (info.dist && info.dist[e]) || roleDistOfChamp(e);
-  const roles = ROLE_ORDER.filter((r, i) => dist[i] >= 0.25).join('/') || champRoles(e).join('/');
-  const rows = list.length ? list.map(x => `<div class="ct-row"><strong>${escapeHtml(x.champ)}</strong>${x.who.length ? ` <span class="badge-pool">👤 ${escapeHtml(x.who.join('/'))}</span>` : ''}<br><span>${escapeHtml(x.why.join(' · '))}${x.src ? ` <em>(${escapeHtml(x.src)})</em>` : ''}</span></div>`).join('')
-    : '<div class="ct-row" style="color:var(--text-muted);">Cap counter clar disponible en aquest draft (bans/picks/Fearless).</div>';
-  return `<div class="ct-head">🛡️ Counters de <strong>${escapeHtml(e)}</strong> <small>(${escapeHtml(roles)})</small></div>${rows}${synergyTipHtml(e)}`;
-}
 (function initCounterTip() {
   let tip = null;
   const get = () => tip || (tip = document.getElementById('counterTip'));

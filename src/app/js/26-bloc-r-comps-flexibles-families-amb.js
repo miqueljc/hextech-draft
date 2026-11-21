@@ -75,13 +75,12 @@ function groupComps() {
   COMPS.length = 0; out.forEach(c => COMPS.push(c));
   if (state.selectedCompId && !COMPS.some(c => c.id === state.selectedCompId)) state.selectedCompId = null;
 }
-const _generateCompsBaseR = generateComps;
-generateComps = function () {
+function generateComps() {
   // restaura les oficials abans de regenerar (les auto es tornen a crear)
   COMPS.forEach(c => { if (!c.gen && c.baseRoles) c.roles = JSON.parse(JSON.stringify(c.baseRoles)); });
-  _generateCompsBaseR();
+  generateComps__base();
   try { groupComps(); } catch (e) { console.warn('groupComps', e); }
-};
+}
 
 // ---------- 2. Finestra de compatibilitats amb icones ----------
 function compRoleHtml(comp, r, full) {
@@ -102,7 +101,7 @@ function compRoleHtml(comp, r, full) {
     ${full ? `<div class="cr-name">${escapeHtml(main || '')}</div>` : ''}
     <div class="cr-alts">${small}${more}</div>${metaAlt}</div>`;
 }
-renderCompsRanking = function (ranked) {
+function renderCompsRanking(ranked) {
   const LIMIT = 8;
   const list = state.showAllComps ? ranked : ranked.slice(0, LIMIT);
   const sel = state.selectedCompId && !list.some(c => c.id === state.selectedCompId) ? ranked.find(c => c.id === state.selectedCompId) : null;
@@ -123,7 +122,7 @@ renderCompsRanking = function (ranked) {
   const more = ranked.length > LIMIT
     ? `<div style="text-align:center;margin-top:6px;"><button class="btn" onclick="state.showAllComps=!state.showAllComps;renderAll()">${state.showAllComps ? 'Mostra\'n menys' : `Mostra totes (${ranked.length})`}</button></div>` : '';
   document.getElementById('compsRanking').innerHTML = cards + more;
-};
+}
 
 // ---------- 3. Icones de runes, encanteris i objectes (catàleg oficial de Data Dragon) ----------
 // Catàleg oficial verificat (Data Dragon 16.23.1) inclòs a l'app; s'actualitza sol quan surt una versió nova
@@ -224,7 +223,7 @@ function buildIconsHtml(b, uid) {
     <div class="bi-cap" id="bicap_${uid}"></div>
   </div>`;
 }
-renderBuildsHtml = function (s) {
+function renderBuildsHtml(s) {
   ddLoadCatalog();
   const blocks = s.lanes.filter(l => l.build).map((l, k) => {
     const b = l.build;
@@ -241,7 +240,7 @@ renderBuildsHtml = function (s) {
     <p style="color:var(--text-muted);font-size:0.72rem;margin-bottom:4px;">Base: la build més jugada a op.gg (Emerald+, parc 26.23) quan n'hi ha dades; si no, plantilla per arquetip. Després s'ajusta als dos drafts. Toca o passa per sobre d'una icona per veure'n el nom i el motiu. Icones oficials de Riot (Data Dragon); sense connexió es mostra el nom.</p>
     ${blocks || '<p>Assigna campions als rols per veure runes i build.</p>'}
   </div>`;
-};
+}
 (function biCaption() {
   const show = ev => {
     const g = ev.target.closest && ev.target.closest('.bi-box .gi'); if (!g) return;

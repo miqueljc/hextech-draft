@@ -3,7 +3,7 @@ const LS = { opgg: 'hextech_opgg_v1', counters: 'hextech_counters_v1', syn: 'hex
 var SHARED = null, SHARED_META = null;
 function lsGet(k) { if (SHARED && SHARED[k] !== undefined) return SHARED[k]; try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-function clearCaches() { _assignCache.clear(); _enemyCache.clear(); }
+function clearCaches__base() { _assignCache.clear(); _enemyCache.clear(); }
 const TAG_LIST = ['front', 'eng', 'peel', 'poke', 'dive', 'assn', 'rng', 'mob', 'combo', 'scale', 'early', 'split', 'ap', 'ad'];
 const TAG_LABEL = { front: 'Frontline', eng: 'Engage', peel: 'Peel', poke: 'Poke', dive: 'Dive', assn: 'Assassí', rng: 'A distància', mob: 'Mobilitat', combo: 'Combo AoE', scale: 'Escalat', early: 'Early', split: 'Splitpush', ap: 'Dany AP', ad: 'Dany AD' };
 
@@ -314,7 +314,7 @@ function renderDataTab() {
   if (ov) ov.innerHTML = Object.keys(o).length ? `Campions editats: ${Object.keys(o).map(c => `<a href="#" onclick="document.getElementById('tagChamp').value='${c.replace(/'/g, "\\'")}';loadTagChamp();return false;" style="color:var(--blue);">${escapeHtml(c)}</a>`).join(', ')} · <a href="#" onclick="resetAllTags();return false;" style="color:#FF8A9B;">restaura-ho tot</a>` : 'Cap campió editat.';
 }
 
-function afterDataChange() {
+function afterDataChange__base() {
   clearCaches();
   applyTagOverrides();
   applyCounterOverrides();

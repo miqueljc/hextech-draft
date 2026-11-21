@@ -68,15 +68,14 @@ function recSelect(c) {
 function recPick(c) { _recSel = null; pickChampion(c); }
 let _recDetailOpen = false;
 function toggleRecDetail() { _recDetailOpen = !_recDetailOpen; const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen); }
-const _getLiveAdviceBaseV = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  const h = _getLiveAdviceBaseV(ranked);
+function getLiveAdvice(ranked) {
+  const h = getLiveAdvice__u(ranked);
   let g = '';
   try { g = recGridHtml(); } catch (e) { console.warn('recGrid', e); }
   try { const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen || !g); } catch (e) {}
   if (!g) return h;
   return `${g}<button class="rec-toggle" onclick="toggleRecDetail()"><span class="rm">Mostra el detall en text</span><span class="rl">Amaga el detall</span></button><div class="rec-detail">${h}</div>`;
-};
+}
 (function vStyles() {
   const css = `
   #liveAdviceBox > strong { display: none; }

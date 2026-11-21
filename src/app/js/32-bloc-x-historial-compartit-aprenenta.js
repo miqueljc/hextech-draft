@@ -8,7 +8,7 @@ function allHist() {
   [...sharedHist(), ...DRAFT_HIST].forEach(h => { if (!h || !h.result) return; const k = histKey(h); if (seen.has(k)) return; seen.add(k); out.push(h); });
   return out;
 }
-teamRec = function (p, c) {
+function teamRec(p, c) {
   if (!_teamRec) {
     _teamRec = new Map();
     allHist().forEach(h => (h.roles || []).forEach(x => {
@@ -19,7 +19,7 @@ teamRec = function (p, c) {
     }));
   }
   return _teamRec.get(ROSTER[p].name + '|' + c) || null;
-};
+}
 let _duoRec = null;
 function duoRec(a, b) {
   if (!_duoRec) {
@@ -35,15 +35,12 @@ function duoRec(a, b) {
   }
   return _duoRec.get([a, b].sort().join('|')) || null;
 }
-const _saveHistBaseX = saveHist;
-saveHist = function () { _saveHistBaseX(); _duoRec = null; };
-const _afterDataChangeBaseX = afterDataChange;
-afterDataChange = function () { _teamRec = null; _duoRec = null; try { _assignCache.clear(); } catch (e) {} _afterDataChangeBaseX(); };
+function saveHist() { saveHist__base(); _duoRec = null; }
+function afterDataChange() { _teamRec = null; _duoRec = null; try { _assignCache.clear(); } catch (e) {} afterDataChange__w(); }
 
 // --- 2. Recomanacions: parelles que ja heu jugat juntes (mínim 2 partides, mostra encongida) ---
-const _recommendChampsBaseX = recommendChamps;
-recommendChamps = function (ctx, excludeIdx) {
-  const out = _recommendChampsBaseX(ctx, excludeIdx);
+function recommendChamps(ctx, excludeIdx) {
+  const out = recommendChamps__u(ctx, excludeIdx);
   try {
     const ally = getOurPicks().filter((c, i) => c && i !== excludeIdx);
     if (!ally.length || !allHist().length) return out;
@@ -58,12 +55,11 @@ recommendChamps = function (ctx, excludeIdx) {
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('duoRec', e); }
   return out;
-};
+}
 
 // --- 3. Veredicte de línia: un winrate real clar mana sobre les regles generals ---
-const _laneMatchupBaseX = laneMatchup;
-laneMatchup = function (c, e, role) {
-  const r = _laneMatchupBaseX(c, e, role);
+function laneMatchup(c, e, role) {
+  const r = laneMatchup__n(c, e, role);
   try {
     const m = muScore(c, e);
     if (!m.real || Math.abs(m.adv) < 2.5) return r;
@@ -76,10 +72,10 @@ laneMatchup = function (c, e, role) {
     const score = sign > 0 ? Math.max(capped, 2) : Math.min(capped, -2);
     return { score, notes: r.notes };
   } catch (err) { return r; }
-};
+}
 
 // --- 4. Text de Discord: instruccions per jugador sense campions aliens + pla detallat ---
-copyDiscordPlan = function () {
+function copyDiscordPlan() {
   const s = buildStrategy();
   const { comp, B } = s;
   let text = `🏆 **PLA DE PARTIDA — ${comp.name.toUpperCase()} (${state.ourSide} SIDE)**\n`;
@@ -109,24 +105,27 @@ copyDiscordPlan = function () {
   text += buildsDiscordText(s);
   const parts = splitDiscord(text);
   const out = parts.map((pt, i) => (i === 0 ? '' : `\n⸻ MISSATGE ${i + 1} ⸻\n`) + pt).join('');
-  const done = () => alert(parts.length > 1
-    ? `✅ Pla copiat en ${parts.length} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
+  deliverPlanText(out, parts.length);
+  return out;
+}
+// Escriptori: porta-retalls i avís. El mòbil la substitueix pel full de compartir del sistema.
+function deliverPlanText(out, nParts) {
+  const done = () => alert(nParts > 1
+    ? `✅ Pla copiat en ${nParts} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
     : '✅ Pla de partida copiat al porta-retalls llest per enganxar a Discord!');
   try { navigator.clipboard.writeText(out).then(done, done); } catch (e) { done(); }
-  return out;
-};
+}
 
 // --- 5. Historial: indica quantes partides venen de l'equip (compartides) ---
-const _renderHistoryBaseX = renderHistory;
-renderHistory = function () {
-  _renderHistoryBaseX();
+function renderHistory() {
+  renderHistory__base();
   try {
     const el = document.getElementById('histPanel'); if (!el) return;
     const sh = sharedHist().length, all = allHist(), w = all.filter(h => h.result === 'W').length;
     const t = el.querySelector('.panel-title + div');
     if (t) t.innerHTML = `${all.length ? `${all.length} partides en total (${sh} compartides per l'equip, ${DRAFT_HIST.length} d'aquest dispositiu) · ${w}V-${all.length - w}D. El motor en té en compte el resultat per jugador i campió i per parelles de campions (a partir de 2 partides).` : 'Encara no hi ha partides desades. En acabar un draft, desa el resultat (✅/❌).'}<br><span style="color:var(--text-muted);">Per compartir les d'aquest dispositiu amb tot l'equip: «Copia l'historial» i envia-m'ho.</span>`;
   } catch (e) {}
-};
+}
 
 init();
 

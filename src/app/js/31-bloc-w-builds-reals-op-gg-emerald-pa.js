@@ -120,8 +120,7 @@ function loadRealBuilds() {
   else REAL_BUILDS = REAL_BUILDS_DEFAULT;
 }
 loadRealBuilds();
-const _afterDataChangeBaseW = afterDataChange;
-afterDataChange = function () { loadRealBuilds(); _afterDataChangeBaseW(); };
+function afterDataChange__w() { loadRealBuilds(); afterDataChange__u(); }
 // Icones que el catàleg desat encara no tenia (Data Dragon les afegeix sol si hi ha connexió)
 (function addItemIds() {
   try {
@@ -144,8 +143,7 @@ function realBuildOf(c, role) { const r = REAL_BUILDS[c + '|' + role]; return r 
 const JG_PET = { TK: 'Mosstomper Seedling', TS: 'Mosstomper Seedling', DA: 'Scorchclaw Pup', AA: 'Scorchclaw Pup', SK: 'Scorchclaw Pup' };
 const CARRY_ARCH = new Set(['MK', 'MG', 'AA', 'DA', 'MS', 'OH']);
 // Aplica la build real com a base abans de la personalització per aquesta partida
-const _personalizeBuildBaseW = personalizeBuild;
-personalizeBuild = function (adv, c, role, x) {
+function personalizeBuild(adv, c, role, x) {
   const rb = realBuildOf(c, role);
   let a = adv;
   if (rb) {
@@ -157,9 +155,9 @@ personalizeBuild = function (adv, c, role, x) {
   } else if (role === 'Jg') {
     a = { ...adv, start: `${JG_PET[adv.arch] || 'Gustwalker Hatchling'} + Health Potion` };
   }
-  const r = _personalizeBuildBaseW(a, c, role, x);
+  const r = personalizeBuild__base(a, c, role, x);
   return finishBuild(r, a, c, role, x);
-};
+}
 function finishBuild(r, a, c, role, x) {
   const rb = a.real, out = { ...r };
   // Inici: l'ajust per rival de rang a top es manté; la jungla sempre comença amb mascota
@@ -376,9 +374,8 @@ function groupedThreats(s, carry) {
   const score = list => list.reduce((a, e) => a + (hasTag(e, 'assn') ? 3 : 0) + (hasTag(e, 'eng') ? 2 : 0) + (hasTag(e, 'dive') ? 2 : 0) + (hasTag(e, 'poke') ? 1 : 0) + (hasTag(e, 'scale') ? 1 : 0), 0);
   return [...by.entries()].sort((a, b) => score(b[1]) - score(a[1])).map(([t, list]) => ({ champ: list.join(', '), txt: escapeHtml(t) }));
 }
-const _buildStrategyBaseW = buildStrategy;
-buildStrategy = function () {
-  const s = _buildStrategyBaseW();
+function buildStrategy() {
+  const s = buildStrategy__base();
   try {
     const carry = mainCarry(s.lanes);
     s.deep = { tf: teamfightPlan(s), obj: objectivePlan(s), lanes: s.lanes.map(l => ({ l, txt: laneDetail(l, s), job: roleJob(l, s, carry, engagersOf(s.lanes)) })).filter(x => x.txt), carry };
@@ -392,7 +389,7 @@ buildStrategy = function () {
     });
   } catch (e) { console.warn('deepPlan', e); }
   return s;
-};
+}
 function deepPlanHtml(s) {
   if (!s.deep) return '';
   return `<div class="strat-card" style="grid-column: 1 / -1;">
@@ -404,9 +401,8 @@ function deepPlanHtml(s) {
     <p class="dp-src">Els winrates de línia són de partides reals (Metabot, Emerald+). La resta són regles a partir de les etiquetes dels campions; feu-les servir com a punt de partida, no com a veritat absoluta.</p>
   </div>`;
 }
-const _generateStrategyBaseW = generateStrategy;
-generateStrategy = function () {
-  _generateStrategyBaseW();
+function generateStrategy() {
+  generateStrategy__base();
   try {
     const s = buildStrategy(), el = document.getElementById('strategyContent');
     if (!el || !s.deep) return;
@@ -415,7 +411,7 @@ generateStrategy = function () {
     const tmp = document.createElement('div'); tmp.innerHTML = deepPlanHtml(s);
     if (anchor && tmp.firstElementChild) anchor.insertAdjacentElement('afterend', tmp.firstElementChild);
   } catch (e) { console.warn('deepPlanHtml', e); }
-};
+}
 const _copyDiscordPlanBaseW = typeof copyDiscordPlan === 'function' ? copyDiscordPlan : null;
 (function wStyles() {
   const css = `.dp-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:0.8rem; }

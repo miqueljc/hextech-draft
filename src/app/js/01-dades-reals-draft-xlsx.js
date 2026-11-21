@@ -347,7 +347,7 @@ function resetDraft() {
   renderAll();
 }
 
-function updateEnemyOtps() {
+function updateEnemyOtps__base() {
   const raw = document.getElementById('enemyOtpInput').value;
   state.enemyOtps = raw.split(',').map(s => s.trim()).filter(Boolean);
   const container = document.getElementById('enemyOtpBadges');
@@ -355,12 +355,6 @@ function updateEnemyOtps() {
   renderAll();
 }
 
-function setRoleFilter(role, pill) {
-  state.roleFilter = role;
-  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-  renderChampGrid();
-}
 
 function getUnavailableChamps(side) {
   return new Set([

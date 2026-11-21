@@ -1,5 +1,5 @@
 // ================= RENDERITZAT =================
-function renderAll() {
+function renderAll__base() {
   renderSlots();
   const ranked = evaluateComps();
   document.getElementById('liveAdviceText').innerHTML = getLiveAdvice(ranked);
@@ -93,7 +93,7 @@ function renderAssignment() {
     : '<div style="color:var(--text-muted);font-size:0.78rem;">Encara no hi ha picks rivals.</div>';
 }
 
-function renderChampGrid() {
+function renderChampGrid__base() {
   const q = document.getElementById('champSearch').value.toLowerCase().trim();
   const unavailable = getUnavailableChamps();
   const poolSet = new Set(ROSTER.flatMap(r => r.pool));

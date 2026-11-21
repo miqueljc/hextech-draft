@@ -1093,7 +1093,7 @@ function resetDraft() {
   renderAll();
 }
 
-function updateEnemyOtps() {
+function updateEnemyOtps__base() {
   const raw = document.getElementById('enemyOtpInput').value;
   state.enemyOtps = raw.split(',').map(s => s.trim()).filter(Boolean);
   const container = document.getElementById('enemyOtpBadges');
@@ -1101,12 +1101,6 @@ function updateEnemyOtps() {
   renderAll();
 }
 
-function setRoleFilter(role, pill) {
-  state.roleFilter = role;
-  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
-  renderChampGrid();
-}
 
 function getUnavailableChamps(side) {
   return new Set([
@@ -1922,7 +1916,7 @@ function bootsFor(c, role, arch, x, T) {
   return b;
 }
 
-function adviseBuild(c, role, x) {
+function adviseBuild__base(c, role, x) {
   const arch = archFor(c, role), T = BUILD_T[arch];
   const kind = (ARCH[c] || {}).kind || '';
   const [keystone, keyWhy] = T.key(c, role, x, kind);
@@ -1994,30 +1988,6 @@ function uggUrl(c, role) {
   return `https://u.gg/lol/champions/${slug}/build/${r}`;
 }
 
-function renderBuildsHtml(s) {
-  const blocks = s.lanes.filter(l => l.build).map(l => {
-    const b = l.build;
-    const situ = b.situ.length
-      ? `<br><strong>Adaptacions segons el rival:</strong> ${b.situ.map(z => `<em>${escapeHtml(z.why)}</em> → ${escapeHtml(z.item)}`).join(' · ')}`
-      : '';
-    const notes = b.notes.length ? `<br>${b.notes.map(n => `<span style="color:var(--text-muted);">• ${escapeHtml(n)}</span>`).join('<br>')}` : '';
-    return `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:0.8rem;">
-      <div style="margin-bottom:3px;"><span class="role-tag">${l.role.toUpperCase()}</span> <strong>${escapeHtml(l.champ)}</strong>
-        <span style="color:var(--text-muted);">· ${escapeHtml(l.player.name.split('#')[0])} · plantilla: ${escapeHtml(b.label)}</span>
-        <a href="${escapeHtml(uggUrl(l.champ, l.role))}" target="_blank" rel="noopener" style="color:var(--blue);font-size:0.74rem;margin-left:6px;">stats reals (u.gg) ↗</a></div>
-      <strong>Runes:</strong> <span style="color:var(--gold);">${escapeHtml(b.keystone)}</span> (${escapeHtml(b.keyWhy)}) — ${escapeHtml(b.primary)}<br>
-      <strong>Secundari:</strong> ${escapeHtml(b.secondary)} · <strong>Shards:</strong> ${escapeHtml(b.shards)}<br>
-      <strong>Sums:</strong> ${escapeHtml(b.summoners)}<br>
-      <strong>Inici:</strong> ${escapeHtml(b.start)} · <strong>Botes:</strong> ${escapeHtml(b.boots)}<br>
-      ${b.order ? `<strong>Ordre de compra (per a aquesta partida):</strong><br>${b.order.map((o, i) => `<span style="margin-left:8px;">${i + 1}. <strong>${escapeHtml(o.item)}</strong> <span style="color:var(--text-muted);">— ${escapeHtml(o.why)}</span></span>`).join('<br>')}` : `<strong>Core:</strong> ${b.core.map(escapeHtml).join(' → ')}`}${b.order ? '' : situ}${notes}
-    </div>`;
-  }).join('');
-  return `<div class="strat-card" style="grid-column: 1 / -1;">
-    <h4>🛠️ Runes i build recomanades (segons els dos drafts)</h4>
-    <p style="color:var(--text-muted);font-size:0.74rem;margin-bottom:4px;">Plantilles per arquetip adaptades a la composició aliada i rival. Noms de runes i objectes contrastats amb les notes oficials de la Season 2 (26.9) i les notes oficials del 26.23; no són estadístiques per campió: confirma amb l'enllaç "stats reals".</p>
-    ${blocks || '<p>Assigna campions als rols per veure runes i build.</p>'}
-  </div>`;
-}
 
 function renderPatchNotesHtml(s) {
   if (!s.patchNotes.length) {
@@ -2086,29 +2056,9 @@ function champRoles(c) {
   const d = CHAMP_DATA[c];
   return d ? d.roles.map(l => LETTER_ROLE[l]) : [];
 }
-function roleDistOfChamp(c) {
-  const rs = champRoles(c), d = [0, 0, 0, 0, 0];
-  rs.forEach(r => { d[ROLE_ORDER.indexOf(r)] += 1 / rs.length; });
-  return d;
-}
 function distOverlap(a, b) { return a.reduce((s, x, i) => s + x * b[i], 0); }
 
 // Màxim nombre de campions que es poden col·locar en rols diferents (rols naturals)
-function maxRoleMatching(champs) {
-  const matchRole = [-1, -1, -1, -1, -1];
-  const tryAssign = (i, seen) => {
-    for (const rn of champRoles(champs[i])) {
-      const r = ROLE_ORDER.indexOf(rn);
-      if (seen[r]) continue;
-      seen[r] = true;
-      if (matchRole[r] === -1 || tryAssign(matchRole[r], seen)) { matchRole[r] = i; return true; }
-    }
-    return false;
-  };
-  let m = 0;
-  for (let i = 0; i < champs.length; i++) if (tryAssign(i, [false, false, false, false, false])) m++;
-  return m;
-}
 
 function permutations(a) {
   if (a.length <= 1) return [a];
@@ -2118,47 +2068,6 @@ const PLAYER_PERMS = permutations([0, 1, 2, 3, 4]);
 
 // ---- Rival: tots els repartiments de rols que tenen sentit ----
 const _enemyCache = new Map();
-function enemyRoleInfo() {
-  const champs = getEnemyPicks().filter(Boolean);
-  const locks = state.enemyLocks || {};
-  const key = champs.map(c => c + ':' + (locks[c] || '')).join('|');
-  if (_enemyCache.has(key)) return _enemyCache.get(key);
-
-  function enumerate(useLocks) {
-    let minCost = Infinity, list = [];
-    const taken = [false, false, false, false, false], cur = [];
-    (function rec(i, cost) {
-      if (cost > minCost) return;
-      if (i === champs.length) {
-        if (cost < minCost) { minCost = cost; list = []; }
-        list.push([...cur]);
-        return;
-      }
-      const c = champs[i], lock = useLocks ? locks[c] : null;
-      for (let r = 0; r < 5; r++) {
-        if (taken[r]) continue;
-        if (lock && ROLE_ORDER[r] !== lock) continue;
-        const natural = lock ? true : champRoles(c).includes(ROLE_ORDER[r]);
-        taken[r] = true; cur[i] = r;
-        rec(i + 1, cost + (natural ? 0 : 1));
-        taken[r] = false;
-      }
-    })(0, 0);
-    return list;
-  }
-  let list = enumerate(true);
-  if (!list.length) list = enumerate(false); // locks contradictoris: s'ignoren
-
-  const dist = {};
-  champs.forEach((c, i) => {
-    const d = [0, 0, 0, 0, 0];
-    list.forEach(asg => { d[asg[i]] += 1 / list.length; });
-    dist[c] = d;
-  });
-  const info = { champs, count: list.length, dist, ambiguous: champs.some(c => dist[c].filter(x => x > 0.001).length > 1) };
-  _enemyCache.set(key, info);
-  return info;
-}
 
 // ---- Jugadors multi-rol: cada jugador té un pool de campions per cada rol que pot jugar ----
 const ROLEPOOL_LS_KEY = 'hextech_rolepools_v1';
@@ -2203,7 +2112,7 @@ function playerRoles(p) { return ROLE_ORDER.filter(r => playsRole(p, r)); }
 function shortName(p) { return ROSTER[p].name.split('#')[0]; }
 
 // Rols on algú de l'equip pot jugar un campió (flex REAL nostre)
-function ourRolesFor(c) {
+function ourRolesFor__base(c) {
   const s = new Set();
   ROSTER.forEach((pl, p) => ROLE_ORDER.forEach(r => { if (poolOf(p, r).includes(c)) s.add(r); }));
   return ROLE_ORDER.filter(r => s.has(r));
@@ -2237,8 +2146,6 @@ function feasibleCount(champs) {
 // ---- Lògica de draft professional ----
 // Pes de la "informació" segons quants picks nostres ja hi ha (el primer pick revela més que l'últim)
 const PHASE_W = [1, 0.8, 0.5, 0.2, 0];
-function blindWeakness(c) { return Object.keys(LANE_COUNTERS).filter(e => LANE_COUNTERS[e].includes(c)).length; }
-function isReactive(c) { return Object.prototype.hasOwnProperty.call(LANE_COUNTERS, c); }
 function flexScoreOf(c) {
   const my = ourRolesFor(c).length, pub = champRoles(c).length, bt = bestTier(c);
   return 9 * Math.max(0, my - 1) + 4 * Math.max(0, pub - 1) + (bt ? TIER_PTS[bt] : 0) - 3 * blindWeakness(c) - (isReactive(c) ? 8 : 0);
@@ -2248,7 +2155,7 @@ function phaseOf(c) {
   if ((isReactive(c) && my.length < 2) || (my.length === 1 && pub <= 1 && bt !== 'S+')) return 3;
   return flexScoreOf(c) >= 12 ? 1 : 2;
 }
-function phaseAdviceHtml(k) {
+function phaseAdviceHtml__base(k) {
   if (k <= 1) return `<br><span style="color:var(--gold);">🧠 Fase 1 (informació mínima):</span> tria <strong>flex</strong> i picks <strong>segurs a cegues</strong>; guarda per al final els picks d'un sol rol i els reactius (Pyke, Malphite, Poppy…). Tot el que triïs ho veurà el rival.`;
   if (k <= 3) return `<br><span style="color:var(--gold);">🧠 Fase 2:</span> ja heu mostrat bastant; completa el que falta (frontline / engage / dany) i comença a respondre als seus picks. Deixa <strong>1-2 rols oberts</strong> per decidir el final.`;
   return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
@@ -2261,7 +2168,7 @@ function playerRoleScore(p, r) {
   if (!playsRole(p, role)) return -8;
   return pl.roleShare && pl.roleShare[role] >= 30 ? 6 : 3;
 }
-function playerChampFit(p, r, c) {
+function playerChampFit__base(p, r, c) {
   const pl = ROSTER[p], role = ROLE_ORDER[r];
   let s = 0;
   if (poolOf(p, role).includes(c)) {
@@ -2436,138 +2343,6 @@ function buildCtx() {
 }
 
 // ---- Recomanació de campions: només depèn dels picks aliats i enemics ----
-function recommendChamps(ctx, excludeIdx) {
-  ctx = ctx || buildCtx();
-  const slots = getOurPicks();
-  const ally = slots.filter((c, i) => c && i !== excludeIdx);
-  const allyProf = teamProfile(ally);
-  const enemyProf = teamProfile(ctx.enemyPicks);
-  const info = enemyRoleInfo();
-
-  const poolUnion = new Map();
-  ROSTER.forEach((pl, pi) => pl.pool.forEach(c => {
-    if (!poolUnion.has(c)) poolUnion.set(c, []);
-    poolUnion.get(c).push(pi);
-  }));
-  const cands = new Set(poolUnion.keys());
-  Object.values(ctx.comp.roles).flat().forEach(c => cands.add(c));
-  const covered = new Set();
-  ally.forEach(c => champRoles(c).forEach(r => covered.add(r)));
-
-  const out = [];
-  cands.forEach(c => {
-    if (ctx.unavailable.has(c) || !CHAMP_DATA[c]) return;
-    let score = 0;
-    const why = [];
-    const add = (pts, txt, style) => { score += pts; why.push({ pts, txt, style }); };
-    const t = tag => hasTag(c, tag);
-
-    // Disponibilitat a l'equip (qualsevol jugador, sense fixar rol)
-    const who = poolUnion.get(c) || [];
-    if (who.length) {
-      const names = who.slice(0, 2).map(pi => ROSTER[pi].name.split('#')[0]).join('/');
-      add(16, `al pool de ${names}${who.length > 2 ? '…' : ''}`);
-      let bonus = 0, bestP = -1, bestR = -99;
-      who.forEach(pi => {
-        const pl = ROSTER[pi];
-        let b = pl.excelMains.includes(c) ? 8 : 0;
-        const h = pl.opggHighlights.find(x => x.champ === c);
-        const hasStat = Boolean(champStat(pi, c));
-        if (hasStat) b = Math.max(b, Math.round(champRating(pi, c) * 0.7 * formMul(pi)));
-        else if (h) b = Math.max(b, Math.round(h.bonus * 0.6));
-        if (hasStat && champRating(pi, c) > bestR) { bestR = champRating(pi, c); bestP = pi; }
-        bonus = Math.max(bonus, b);
-      });
-      if (bonus > 0) add(bonus, bestP >= 0 && bestR >= 4 ? `bon historial: ${shortName(bestP)} ${statText(bestP, c)}` : 'main / bon WR real');
-      if (bestP >= 0 && bestR <= -6 && who.every(pi => !champStat(pi, c) || champRating(pi, c) <= -6)) add(-8, `historial negatiu: ${shortName(bestP)} ${statText(bestP, c)}`);
-    } else add(-14, 'ningú de l\'equip el té al pool');
-
-    // Comp objectiu
-    if (Object.values(ctx.comp.roles).some(l => l.includes(c))) add(14, `encaixa a ${ctx.comp.name.split(':')[0]}`);
-
-    // Valor del pick al parc: meta 26.22 + canvis 26.23
-    const bt = bestTier(c);
-    if (bt) add(TIER_PTS[bt], `${bt} al meta del ${PATCH_META.tierSource}`);
-    const pch = PATCH_CHANGES[c];
-    if (pch) add(pch.delta, `${pch.delta > 0 ? 'buff' : 'nerf'} al 26.23`);
-
-    // Draft professional: flex, informació i seguretat a cegues (pesa més als primers picks)
-    const k = ally.length, W = PHASE_W[Math.min(k, 4)];
-    const myRoles = ourRolesFor(c), pubRoles = champRoles(c);
-    if (W > 0) {
-      if (myRoles.length >= 2) add(Math.round(W * (4 + 4 * Math.min(myRoles.length - 1, 2))), `flex real (${myRoles.join('/')}): el rival no sap on anirà`);
-      else if (myRoles.length === 1 && pubRoles.length <= 1 && W >= 0.5) add(-Math.round(W * 5), `només ${myRoles[0]}: revela rol i jugador massa aviat`);
-      if (pubRoles.length >= 2 && myRoles.length < 2) add(Math.round(W * 3), `flex públic (${pubRoles.join('/')})`);
-      const weak = blindWeakness(c);
-      if (weak >= 1) add(-Math.round(W * Math.min(8, weak * 3)), `counterejable a cegues (${weak} counters coneguts)`);
-      else if (bt === 'S+' || bt === 'S') add(Math.round(W * 4), 'segur a cegues i fort al parc');
-      if (isReactive(c) && myRoles.length < 2 && W >= 0.5) add(-Math.round(W * 5), 'pick reactiu: guarda\'l per respondre al final');
-      if (bt === 'S+') add(Math.round(W * 4), 'alta prioritat: neguem el pick al rival');
-    }
-    if (state.enemyOtps.includes(c)) add(8, 'nega el main d\'un rival');
-    if (state.fearless) { const dp = fearlessDepth(c); if (dp !== Infinity && dp <= 4) add(dp <= 2 ? -8 : -4, `Fearless: només us queden ${dp} campions al pool d'aquest rol`); }
-    if (who.length && k >= 2 && feasibleCount([...ally, c]) < feasibleCount(ally) + 1) add(-10, 'cap jugador el pot jugar sense trencar els altres picks');
-
-    // Cobertura de rols (flexible, sense assignar encara)
-    const m = maxRoleMatching([...ally, c]);
-    if (m <= maxRoleMatching(ally)) add(-25, 'no aporta cap rol nou: no quedarien rols per a tots els picks');
-    else {
-      if (champRoles(c).some(r => !covered.has(r))) add(8, 'cobreix un rol encara per cobrir');
-      if (ally.length >= 3 && who.length && feasibleCount([...ally, c]) === feasibleCount(ally) + 1) add(6, 'omple un rol amb jugador disponible');
-    }
-
-    // Necessitats del draft aliat
-    if (allyProf.front === 0 && t('front')) add(10, 'aporta la frontline que falta');
-    if (allyProf.front >= 3 && t('front')) add(-5, 'ja teniu prou frontline');
-    if (allyProf.eng === 0 && t('eng')) add(8, 'aporta engage');
-    if (allyProf.peel === 0 && allyProf.n >= 3 && t('peel')) add(5, 'aporta peel pel carry');
-    if (allyProf.eng >= 1 && t('combo')) add(4, 'combo AoE amb el vostre engage');
-    if (allyProf.ad >= 2 && allyProf.ap === 0 && t('ap')) add(8, 'equilibra el dany (falta AP)');
-    if (allyProf.ap >= 2 && allyProf.ad === 0 && t('ad')) add(8, 'equilibra el dany (falta AD)');
-    if (allyProf.ad >= 3 && allyProf.ap === 0 && t('ad') && !t('ap')) add(-8, 'massa dany AD');
-    if (allyProf.ap >= 3 && allyProf.ad === 0 && t('ap') && !t('ad')) add(-8, 'massa dany AP');
-
-    // Draft enemic: counters de lane ponderats per la probabilitat que coincideixin de rol
-    const cd = roleDistOfChamp(c);
-    const lateMul = k >= 3 ? 1.4 : 1;
-    ctx.enemyPicks.forEach(e => {
-      const ov = distOverlap(cd, info.dist[e] || roleDistOfChamp(e));
-      if (ov < 0.15) return;
-      const cond = ov < 0.9 ? ` (si coincideixen de rol, ${Math.round(ov * 100)}%)` : '';
-      if ((LANE_COUNTERS[c] || []).includes(e)) add(Math.max(3, Math.round(14 * ov * lateMul)), `counter de lane contra ${e}${cond}`);
-      if ((LANE_COUNTERS[e] || []).includes(c)) add(-Math.max(3, Math.round(14 * ov * lateMul)), `${e} el counteja a la lane${cond}`);
-      if ((EXT_COUNTERS[e] || []).includes(c)) add(Math.max(4, Math.round(12 * ov * lateMul)), `counter segons dades externes contra ${e}${cond}`, 'vs');
-      if ((EXT_COUNTERS[c] || []).includes(e)) add(-Math.max(3, Math.round(10 * ov * lateMul)), `${e} el counteja segons dades externes${cond}`);
-    });
-
-    // Draft enemic: identitat de l'equip
-    if (enemyProf.dive + enemyProf.assn >= 2) {
-      if (t('peel')) add(6, 'peel contra el seu dive/assassins');
-      if (t('front')) add(4, 'absorbeix el seu dive');
-    }
-    if (enemyProf.poke >= 2) {
-      if (t('eng')) add(8, 'engage contra el seu poke');
-      if (t('dive')) add(4, 'dive contra el seu poke');
-      if (t('poke') && !t('eng')) add(-4, 'perd el duel de poke');
-    }
-    if (enemyProf.eng >= 2) {
-      if (t('peel')) add(6, 'peel contra el seu engage');
-      if (t('mob')) add(3, 'mobilitat per esquivar el seu engage');
-    }
-    if (enemyProf.n >= 3 && enemyProf.mob <= 1) {
-      if (t('eng')) add(5, 'rival sense mobilitat: engage');
-      if (t('combo')) add(5, 'rival sense mobilitat: combo AoE');
-    }
-    if (enemyProf.n >= 3 && enemyProf.front === 0) {
-      if (t('dive') || t('assn')) add(5, 'rival sense frontline: accés al backline');
-    }
-
-    styleRules(c, ally, allyProf, enemyProf, add);
-    styleRules2(c, ally, allyProf, enemyProf, add);
-    out.push({ champ: c, score, why });
-  });
-  return out.sort((a, b) => b.score - a.score);
-}
 
 function getActiveRecs(ctx) {
   const { type, side, index } = state.activeSlot;
@@ -2607,7 +2382,7 @@ function draftSnapshotText(A, B, ourChamps) {
   return parts.length ? `<br><span style="color:var(--text-muted);">${parts.join(' ')}</span>` : '';
 }
 
-function getLiveAdvice(rankedComps) {
+function getLiveAdvice__base(rankedComps) {
   const ctx = buildCtx();
   ctx.ranked = rankedComps;
   ctx.comp = pickComp(rankedComps);
@@ -2834,7 +2609,7 @@ function genRolePerms() {
 // Diferència entre dues comps: rols on canvia el campió o el jugador
 function genDiff(a, b) { return a.team.filter((c, i) => c !== b.team[i] || a.perm[i] !== b.perm[i]).length; }
 
-function generateComps() {
+function generateComps__base() {
   for (let i = COMPS.length - 1; i >= 0; i--) if (COMPS[i].gen) COMPS.splice(i, 1);
   const perms = genRolePerms();
   if (!perms.length) { state.selectedCompId = COMPS.some(c => c.id === state.selectedCompId) ? state.selectedCompId : null; return; }
@@ -2926,7 +2701,7 @@ const LS = { opgg: 'hextech_opgg_v1', counters: 'hextech_counters_v1', syn: 'hex
 var SHARED = null, SHARED_META = null;
 function lsGet(k) { if (SHARED && SHARED[k] !== undefined) return SHARED[k]; try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-function clearCaches() { _assignCache.clear(); _enemyCache.clear(); }
+function clearCaches__base() { _assignCache.clear(); _enemyCache.clear(); }
 const TAG_LIST = ['front', 'eng', 'peel', 'poke', 'dive', 'assn', 'rng', 'mob', 'combo', 'scale', 'early', 'split', 'ap', 'ad'];
 const TAG_LABEL = { front: 'Frontline', eng: 'Engage', peel: 'Peel', poke: 'Poke', dive: 'Dive', assn: 'Assassí', rng: 'A distància', mob: 'Mobilitat', combo: 'Combo AoE', scale: 'Escalat', early: 'Early', split: 'Splitpush', ap: 'Dany AP', ad: 'Dany AD' };
 
@@ -3231,7 +3006,7 @@ function renderDataTab() {
   if (ov) ov.innerHTML = Object.keys(o).length ? `Campions editats: ${Object.keys(o).map(c => `<a href="#" onclick="document.getElementById('tagChamp').value='${c.replace(/'/g, "\\'")}';loadTagChamp();return false;" style="color:var(--blue);">${escapeHtml(c)}</a>`).join(', ')} · <a href="#" onclick="resetAllTags();return false;" style="color:#FF8A9B;">restaura-ho tot</a>` : 'Cap campió editat.';
 }
 
-function afterDataChange() {
+function afterDataChange__base() {
   clearCaches();
   applyTagOverrides();
   applyCounterOverrides();
@@ -3250,48 +3025,6 @@ function afterDataChange() {
 }
 
 // ================= BANS ESTIL PRO =================
-function recommendBans(ctx) {
-  const ours = ctx.ourPicks, enemy = ctx.enemyPicks;
-  const info = enemyRoleInfo();
-  const phase2 = ours.length + enemy.length > 0;
-  const keyChamps = ROLE_ORDER.map(r => ctx.comp.roles[r][0]);
-  const myPool = new Set(ROSTER.flatMap(p => p.pool));
-  const eProf = teamProfile(enemy);
-  const coveredE = new Set();
-  enemy.forEach(c => ROLE_ORDER.forEach((r, i) => { if (info.dist[c] && info.dist[c][i] > 0.5) coveredE.add(r); }));
-  const missing = ROLE_ORDER.filter(r => !coveredE.has(r));
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (ctx.unavailable.has(c) || !CHAMP_DATA[c] || myPool.has(c)) return;
-    let score = 0;
-    const why = [];
-    const add = (p, t) => { score += p; why.push({ pts: p, txt: t }); };
-    const bt = bestTier(c), pch = PATCH_CHANGES[c], pub = champRoles(c);
-    if (bt) add(Math.round(TIER_PTS[bt] * 0.9), `${bt} al meta`);
-    if (pch && pch.delta > 0) add(pch.delta, 'buff al 26.23');
-    if (state.enemyOtps.includes(c)) add(16, 'main/OTP conegut del rival');
-    const cd = roleDistOfChamp(c);
-    ours.forEach(p => {
-      if ((LANE_COUNTERS[c] || []).includes(p)) {
-        const ov = distOverlap(cd, roleDistOfChamp(p));
-        if (ov > 0) add(Math.round(12 * Math.min(1, ov + 0.3)), `counteja el vostre ${p}`);
-      }
-    });
-    keyChamps.forEach(k => {
-      if ((LANE_COUNTERS[c] || []).includes(k)) add(phase2 ? 7 : 3, phase2 ? `counteja ${k} (comp objectiu)` : `counteja ${k} (pes reduït: revelaria el pla)`);
-    });
-    if (pub.length >= 2 && bt) add(3 * (pub.length - 1), `flex (${pub.join('/')}): els treu una opció d'amagar informació`);
-    if (phase2) {
-      const fills = pub.filter(r => missing.includes(r));
-      if (fills.length && bt) add(5, `ompliria el seu ${fills[0]} pendent`);
-      if (eProf.n >= 2 && eProf.front === 0 && hasTag(c, 'front')) add(4, 'els donaria la frontline que no tenen');
-      if (eProf.n >= 2 && eProf.eng === 0 && hasTag(c, 'eng')) add(3, 'els donaria engage');
-      enemy.forEach(e => SYNERGY_PAIRS.forEach(([a, b, w]) => { if ((a === e && b === c) || (b === e && a === c)) add(Math.min(8, w), `sinergia amb el seu ${e}`); }));
-    }
-    out.push({ champ: c, score, why });
-  });
-  return out.sort((a, b) => b.score - a.score);
-}
 
 // ================= FEARLESS REAL (SÈRIE DE PARTIDES) =================
 state.fearlessRule = state.fearlessRule || 'BOTH'; // BOTH: tots els picks de partides anteriors queden bloquejats | OWN: només per l'equip que els va jugar
@@ -3320,7 +3053,7 @@ function updateFearlessBtn() {
   btn.textContent = state.fearless ? `⚔️ Fearless: ON (partida ${n + 1})` : '⚔️ Fearless: OFF';
   btn.className = state.fearless ? 'btn btn-active-red' : 'btn';
 }
-function closeGame(result) {
+function closeGame__base(result) {
   state.series.games.push({
     n: state.series.games.length + 1, ourSide: state.ourSide, result,
     us: getOurPicks().filter(Boolean), enemy: getEnemyPicks().filter(Boolean)
@@ -3360,52 +3093,7 @@ function renderFearlessPanel() {
 }
 
 // ================= PREDICCIÓ DE PICKS DEL RIVAL =================
-function predictEnemy(ctx) {
-  const enemy = ctx.enemyPicks, ours = ctx.ourPicks;
-  const eSide = state.ourSide === 'BLUE' ? 'RED' : 'BLUE';
-  const unavailable = getUnavailableChamps(eSide);
-  const eProf = teamProfile(enemy);
-  const baseCover = maxRoleMatching(enemy);
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (unavailable.has(c) || !CHAMP_DATA[c]) return;
-    let score = 0;
-    const why = [];
-    const add = (p, t) => { score += p; why.push({ pts: p, txt: t }); };
-    const bt = bestTier(c), pch = PATCH_CHANGES[c];
-    if (bt) add(TIER_PTS[bt], `${bt} al meta`);
-    if (pch) add(pch.delta, pch.delta > 0 ? 'buff al 26.23' : 'nerf al 26.23');
-    if (state.enemyOtps.includes(c)) add(12, 'main conegut del rival');
-    const cd = roleDistOfChamp(c);
-    ours.forEach(p => {
-      if ((LANE_COUNTERS[c] || []).includes(p)) {
-        const ov = distOverlap(cd, roleDistOfChamp(p));
-        if (ov > 0.1) add(Math.round(9 * Math.min(1, ov + 0.3)), `counteja el vostre ${p}`);
-      }
-    });
-    if (maxRoleMatching([...enemy, c]) > baseCover) add(5, 'cobreix un rol seu pendent');
-    else if (enemy.length >= 1) add(-20, 'no els cabria en cap rol');
-    if (eProf.n >= 2) {
-      if (eProf.front === 0 && hasTag(c, 'front')) add(6, 'els falta frontline');
-      if (eProf.eng === 0 && hasTag(c, 'eng')) add(4, 'els falta engage');
-      if (eProf.ap === 0 && hasTag(c, 'ap')) add(5, 'els falta dany AP');
-      if (eProf.ad === 0 && hasTag(c, 'ad')) add(5, 'els falta dany AD');
-    }
-    enemy.forEach(e => SYNERGY_PAIRS.forEach(([a, b, w]) => { if ((a === e && b === c) || (b === e && a === c)) add(Math.min(8, w), `sinergia amb ${e}`); }));
-    if (champRoles(c).length >= 2) add(2, 'flex');
-    out.push({ champ: c, score, why });
-  });
-  out.sort((a, b) => b.score - a.score);
-  const top = out.slice(0, 12);
-  const z = top.reduce((s, x) => s + Math.exp(x.score / 7), 0);
-  top.forEach(x => { x.prob = Math.exp(x.score / 7) / z; });
-  return top;
-}
-function ourAnswersTo(enemyChamp, ctx) {
-  const pool = [...new Set(ROSTER.flatMap(p => p.pool))];
-  return pool.filter(c => !ctx.unavailable.has(c) && (LANE_COUNTERS[c] || []).includes(enemyChamp)).slice(0, 2);
-}
-function predictionHtml(ctx, max = 4) {
+function predictionHtml__base(ctx, max = 4) {
   const pr = predictEnemy(ctx).slice(0, max);
   if (!pr.length) return '';
   const line = pr.map(x => {
@@ -3634,7 +3322,7 @@ function renderPlayerSheets() {
 }
 
 // ================= RENDERITZAT =================
-function renderAll() {
+function renderAll__base() {
   renderSlots();
   const ranked = evaluateComps();
   document.getElementById('liveAdviceText').innerHTML = getLiveAdvice(ranked);
@@ -3728,7 +3416,7 @@ function renderAssignment() {
     : '<div style="color:var(--text-muted);font-size:0.78rem;">Encara no hi ha picks rivals.</div>';
 }
 
-function renderChampGrid() {
+function renderChampGrid__base() {
   const q = document.getElementById('champSearch').value.toLowerCase().trim();
   const unavailable = getUnavailableChamps();
   const poolSet = new Set(ROSTER.flatMap(r => r.pool));
@@ -3778,31 +3466,8 @@ function toggleSelectComp(id) {
 }
 
 // ================= ANÀLISI DE MATCHUP (amb rols assignats) =================
-function laneMatchup(c, e, role) {
-  let score = 0;
-  const notes = [];
-  if ((LANE_COUNTERS[c] || []).includes(e)) { score += 3; notes.push(`${c} counteja ${e}`); }
-  if ((LANE_COUNTERS[e] || []).includes(c)) { score -= 3; notes.push(`${e} counteja ${c}`); }
-  if ((EXT_COUNTERS[e] || []).includes(c)) { score += 2; notes.push(`${c} counteja ${e} (dades externes)`); }
-  if ((EXT_COUNTERS[c] || []).includes(e)) { score -= 2; notes.push(`${e} counteja ${c} (dades externes)`); }
-  if (role === 'Top' || role === 'Mid') {
-    if (hasTag(c, 'rng') && !hasTag(e, 'rng')) { score += 1; notes.push('avantatge de rang'); }
-    if (!hasTag(c, 'rng') && hasTag(e, 'rng')) { score -= 1; notes.push('desavantatge de rang'); }
-  }
-  if (role === 'Sup') {
-    if (hasTag(c, 'eng') && hasTag(e, 'peel') && !hasTag(e, 'eng')) { score += 1; notes.push('engage contra enchanter/peel'); }
-    if (hasTag(e, 'eng') && hasTag(c, 'peel') && !hasTag(c, 'eng')) { score -= 1; notes.push('el seu engage contra el vostre peel'); }
-  }
-  const ce = hasTag(c, 'early'), ee = hasTag(e, 'early');
-  if (ce && !ee) { score += 1; notes.push('més pic early'); }
-  if (!ce && ee) { score -= 1; notes.push('menys pic early'); }
-  const tc = tierPts(c, role), te = tierPts(e, role);
-  if (tc - te >= 6) { score += 1; notes.push(`meta ${PATCH_META.tierSource}: ${c} ${tierIn(c, role) || '—'} vs ${e} ${tierIn(e, role) || '—'}`); }
-  if (te - tc >= 6) { score -= 1; notes.push(`meta ${PATCH_META.tierSource}: ${e} ${tierIn(e, role) || '—'} vs ${c} ${tierIn(c, role) || '—'}`); }
-  return { score, notes };
-}
 
-function buildStrategy() {
+function buildStrategy__base() {
   const ranked = evaluateComps();
   const comp = pickComp(ranked);
   const asg = getAssignment();
@@ -3958,7 +3623,7 @@ const VERDICT_UI = {
   unknown: { icon: '⏳', color: 'var(--text-muted)', label: 'Pendent' }
 };
 
-function generateStrategy() {
+function generateStrategy__base() {
   const s = buildStrategy();
   const { comp, A, B } = s;
   const enemyNames = B.list.length ? B.list.join(', ') : 'rival pendent';
@@ -4053,36 +3718,6 @@ function generateStrategy() {
   makeCollapsible(document.getElementById('strategyContent'));
 }
 
-function copyDiscordPlan() {
-  const s = buildStrategy();
-  const { comp, B } = s;
-  let text = `🏆 **PLA DE PARTIDA — ${comp.name.toUpperCase()} (${state.ourSide} SIDE)**\n`;
-  text += `🆚 **Rival:** ${B.list.join(', ') || 'pendent'}\n`;
-  text += `📌 **Estil:** ${comp.style}\n\n`;
-  text += `🛣️ **LÍNIES:**\n`;
-  s.lanes.forEach(l => {
-    text += `• **${l.role}** (${l.player.name.split('#')[0]}): ${l.champ || '—'} vs ${l.enemyText} ${VERDICT_UI[l.verdict].icon}${l.notes.length ? ' (' + l.notes.join(', ') + ')' : ''}\n`;
-  });
-  if (s.laneSummary.length) text += s.laneSummary.map(t => `↳ ${t}\n`).join('');
-  text += `\n⏱️ **TIMINGS:**\n`;
-  text += `• **Early:** ${s.early}\n• **Mid:** ${s.mid}\n• **Late:** ${s.late}\n\n`;
-  text += `⚔️ **WIN CONDITION:** ${s.win.join(' ')}\n`;
-  s.tf.slice(0, 4).forEach(t => { text += `• ${t}\n`; });
-  if (s.threats.length) {
-    text += `\n🚨 **AMENACES:** ` + s.threats.map(t => `${t.champ} (${t.txt})`).join(' | ') + `\n`;
-  }
-  text += `\n🎯 **ROLS INDIVIDUALS:**\n`;
-  s.individual.forEach(x => {
-    text += `• **${x.role} (${x.lane.player.name.split('#')[0]} - ${x.lane.champ || '—'}):** ${comp.plan.individual[x.role]}\n`;
-  });
-
-  text += phasePlanDiscord(s.phasePlan);
-  text += buildsDiscordText(s);
-
-  const parts = splitDiscord(text);
-  const out = parts.map((pt, i) => (i === 0 ? '' : `\n⸻ MISSATGE ${i + 1} ⸻\n`) + pt).join('');
-  shareText('Pla de partida', out, '');
-}
 
 function renderRosterTable() {
   document.getElementById('rosterTableBody').innerHTML = ROSTER.map((p, pi) => `
@@ -4184,27 +3819,6 @@ function renderProTab() {
     <p style="font-size:0.74rem;color:var(--text-muted);margin-top:10px;">Truc del vídeo (Skill-Capped): si intercanvieu rols <em>després</em> dels bans, el ban deixa de coincidir amb el pick i el rival no endevina la lane; a més, un flex que feu passar per un altre rol (ciclant campions d'aquell rol) confon més. Els picks <em>neutrals</em> (Ornn, Shen, Syndra, Ahri, Jinx, Aphelios, Karma, Nami...) s'adapten a qualsevol comp: ideals per al blind. Ordre de solo queue: ADC, jungla, suport, mid i top al final (el top és on més pesen els matchups). Segon vídeo (Coach Rogue): les sinergies individuals pesen més que la comp "ideal": ganks = dany + CC (un jungla sense CC com Lee Sin necessita laners amb CC), jungla↔suport és la parella més important, i els ADC tenen arquetip (Samira només amb engage, Caitlyn amb poke/enchanter, Jinx/Aphelios neutres). Obriu amb un pick neutral o d'impacte i després copieu el rival: contrapickeu rol a rol fins al final. Un pick dolent contra un estil (Darius contra abast) pot funcionar si els vostres aliats cobreixen la debilitat. Comfort és rei: no forceu un jugador a un pick que no domina.<br>Heurística: puntuació = flex real ×9 + flex públic ×4 + tier 26.22 − counters coneguts ×3 − reactiu −8. Els counters coneguts són una llista editable limitada (LANE_COUNTERS).</p>`;
 }
 
-function renderCompsRanking(ranked) {
-  const LIMIT = 8;
-  const list = state.showAllComps ? ranked : ranked.slice(0, LIMIT);
-  const sel = state.selectedCompId && !list.some(c => c.id === state.selectedCompId) ? ranked.find(c => c.id === state.selectedCompId) : null;
-  if (sel) list.push(sel);
-  const cards = list.map(comp => {
-    const isSel = state.selectedCompId === comp.id;
-    const summaryChamps = ROLE_ORDER.map(r => comp.roles[r][0]).join(' / ');
-    return `<div class="comp-card ${isSel ? 'selected-comp' : ''}" onclick="toggleSelectComp(${comp.id})">
-      <div class="comp-top">
-        <strong style="font-size:0.84rem;color:var(--gold-light);">${comp.name}</strong>
-        <span class="score-pill">${comp.score}% Match</span>
-      </div>
-      <div class="comp-champs">${summaryChamps}</div>
-      <div class="comp-meta">${comp.reasons.slice(0, 3).join(' • ') || comp.style}</div>
-    </div>`;
-  }).join('');
-  const more = ranked.length > LIMIT
-    ? `<div style="text-align:center;margin-top:6px;"><button class="btn" onclick="state.showAllComps=!state.showAllComps;renderAll()">${state.showAllComps ? 'Mostra\'n menys' : `Mostra totes (${ranked.length})`}</button></div>` : '';
-  document.getElementById('compsRanking').innerHTML = cards + more;
-}
 
 // ================= COUNTERS PER CAMPIÓ, TIPUS DE COMPOSICIÓ I PICKS EN SINTONIA =================
 // Dades externes: enemic > els seus millors counters (rol de lane). Editable a Dades i Editors (2c).
@@ -4244,43 +3858,6 @@ const STRUCT_RULES = [
   [e => hasTag(e, 'mob') && !hasTag(e, 'front'), c => hasTag(c, 'eng') || hasTag(c, 'combo'), 2, 'CC en cadena contra un campió mòbil'],
   [e => hasTag(e, 'front') && !hasTag(e, 'eng'), c => hasTag(c, 'rng') && hasTag(c, 'poke'), 2, 'el desgasta des de lluny']
 ];
-function counterCandidates(e, max = 3) {
-  const unavail = getUnavailableChamps();
-  const info = enemyRoleInfo();
-  const dist = ((info.dist && info.dist[e]) || roleDistOfChamp(e)).slice();
-  dist[3] = dist[4] = Math.max(dist[3], dist[4]); // bot i suport comparteixen lane
-  const poolBy = new Map();
-  ROSTER.forEach((pl, pi) => playerRoles(pi).forEach(r => poolOf(pi, r).forEach(c => { if (!poolBy.has(c)) poolBy.set(c, new Set()); poolBy.get(c).add(pi); })));
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (c === e || !CHAMP_DATA[c] || unavail.has(c)) return;
-    const ov = distOverlap(roleDistOfChamp(c), dist);
-    if (ov < 0.3) return;
-    let pts = 0, why = [], src = null;
-    if ((EXT_COUNTERS[e] || []).includes(c)) { pts += 14; why.push('counter segons dades'); src = EXT_SRC[e] || 'dades externes'; }
-    if ((LANE_COUNTERS[c] || []).includes(e)) { pts += 10; why.push('guanya la línia'); }
-    if ((LANE_COUNTERS[e] || []).includes(c) || (EXT_COUNTERS[c] || []).includes(e)) pts -= 14;
-    let st = 0; const sw = [];
-    STRUCT_RULES.forEach(([fe, fc, p, txt]) => { if (fe(e) && fc(c)) { st += p; sw.push(txt); } });
-    st = Math.min(st, 7);
-    if (st) { pts += st; if (!src) why.push(...sw.slice(0, 2)); }
-    if (pts < 4) return;
-    const bt = bestTier(c); if (bt === 'S+') pts += 2; else if (bt === 'S') pts += 1;
-    if (PATCH_CHANGES[c] && PATCH_CHANGES[c].delta < 0) pts -= 1;
-    const who = poolBy.get(c);
-    if (who) pts += 3;
-    out.push({ champ: c, pts: Math.round(pts * (0.6 + 0.4 * ov)), why, src, who: who ? [...who].map(shortName) : [] });
-  });
-  return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-}
-function counterTipHtml(e) {
-  const list = counterCandidates(e, 3);
-  const info = enemyRoleInfo(), dist = (info.dist && info.dist[e]) || roleDistOfChamp(e);
-  const roles = ROLE_ORDER.filter((r, i) => dist[i] >= 0.25).join('/') || champRoles(e).join('/');
-  const rows = list.length ? list.map(x => `<div class="ct-row"><strong>${escapeHtml(x.champ)}</strong>${x.who.length ? ` <span class="badge-pool">👤 ${escapeHtml(x.who.join('/'))}</span>` : ''}<br><span>${escapeHtml(x.why.join(' · '))}${x.src ? ` <em>(${escapeHtml(x.src)})</em>` : ''}</span></div>`).join('')
-    : '<div class="ct-row" style="color:var(--text-muted);">Cap counter clar disponible en aquest draft (bans/picks/Fearless).</div>';
-  return `<div class="ct-head">🛡️ Counters de <strong>${escapeHtml(e)}</strong> <small>(${escapeHtml(roles)})</small></div>${rows}${synergyTipHtml(e)}`;
-}
 (function initCounterTip() {
   let tip = null;
   const get = () => tip || (tip = document.getElementById('counterTip'));
@@ -4539,32 +4116,6 @@ const STRUCT_SYN = [
   [x => hasTag(x, 'ap') && !hasTag(x, 'ad'), c => hasTag(c, 'ad') && !hasTag(c, 'ap'), 1, 'complementa el dany (AD/AP)']
 ];
 const LANE_PAIR = [['Bot', 'Sup'], ['Jg', 'Mid'], ['Jg', 'Sup'], ['Jg', 'Top']];
-function synergyCandidates(x, max = 3) {
-  const unavail = getUnavailableChamps();
-  const dx = roleDistOfChamp(x);
-  const rx = ROLE_ORDER.filter((r, i) => dx[i] >= 0.3);
-  const poolBy = new Map();
-  ROSTER.forEach((pl, pi) => playerRoles(pi).forEach(r => poolOf(pi, r).forEach(c => { if (!poolBy.has(c)) poolBy.set(c, new Set()); poolBy.get(c).add(pi); })));
-  const out = [];
-  ALL_CHAMPS.forEach(c => {
-    if (c === x || !CHAMP_DATA[c] || unavail.has(c)) return;
-    if (distOverlap(roleDistOfChamp(c), dx) > 0.5) return; // ha de ser d'un altre rol
-    let pts = 0, why = [], src = null;
-    const w = synergyOf(x, c);
-    if (w) { pts += w * 2; why.push('parella recomanada'); src = SYN_SRC[synKey(x, c)] || 'sinergies editades'; }
-    if (ANTI_PAIRS.some(([a, b]) => (a === x && b === c) || (a === c && b === x))) pts -= 20;
-    let st = 0; const sw = [];
-    STRUCT_SYN.forEach(([fx, fc, p, txt]) => { if (fx(x) && fc(c) && !sw.includes(txt)) { st += p; sw.push(txt); } });
-    st = Math.min(st, 6); if (st) { pts += st; if (!src) why.push(...sw.slice(0, 2)); }
-    const rc = champRoles(c);
-    if (LANE_PAIR.some(([a, b]) => (rx.includes(a) && rc.includes(b)) || (rx.includes(b) && rc.includes(a)))) pts += 1;
-    if (pts <= 0) return;
-    const bt = bestTier(c); if (bt === 'S+') pts += 1;
-    const who = poolBy.get(c); if (who) pts += 2;
-    out.push({ champ: c, pts, why, src, who: who ? [...who].map(shortName) : [] });
-  });
-  return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-}
 function synergyTipHtml(x) {
   const list = synergyCandidates(x, 3);
   const enemy = getEnemyPicks().includes(x);
@@ -4589,16 +4140,9 @@ function laneOppsFor(role) {
     return info.champs.map(e => ({ champ: e, prob: info.dist[e][r] })).filter(x => x.prob >= 0.3).sort((a, b) => b.prob - a.prob).slice(0, role === 'Bot' || role === 'Sup' ? 2 : 2);
   } catch (e) { return []; }
 }
-function realMatchupNote(c, e) {
-  const wins = (typeof EXT_COUNTERS !== 'undefined' && EXT_COUNTERS[c] || []).includes(e);   // e et counteja a tu
-  const youWin = (typeof EXT_COUNTERS !== 'undefined' && EXT_COUNTERS[e] || []).includes(c);
-  if (wins && !youWin) return `${e} et counteja segons winrates reals`;
-  if (youWin && !wins) return `tu counteges ${e} segons winrates reals`;
-  return '';
-}
 function namesOf(list, max = 3) { return list.slice(0, max).join(', ') + (list.length > max ? '…' : ''); }
 
-function personalizeBuild(adv, c, role, x) {
+function personalizeBuild__base(adv, c, role, x) {
   const arch = adv.arch, T = BUILD_T[arch], enemy = x.enemy || [], our = x.our || [];
   const fragile = FRAGILE_ARCH.has(arch), tankish = ['TK', 'TS'].includes(arch);
   const dealers = enemy.filter(e => !['TK', 'TS'].includes((ARCH[e] || {}).code));
@@ -4697,11 +4241,10 @@ function personalizeBuild(adv, c, role, x) {
     situ: picks.map(p => ({ why: p.why, item: p.item })), boots: dupBoots };
 }
 
-const adviseBuildBase = adviseBuild;
-adviseBuild = function (c, role, x) {
-  const b = adviseBuildBase(c, role, x);
+function adviseBuild(c, role, x) {
+  const b = adviseBuild__base(c, role, x);
   try { return personalizeBuild(b, c, role, x); } catch (e) { console.warn('personalizeBuild', e); return b; }
-};
+}
 
 const OP_PICKS_DEFAULT = {"patch":"26.23","source":"Skill Capped (estadístiques Emerald+ i tier list d'experts de Mid), 20/11/2026","roles":{"Top":["Malphite","Ornn"],"Jg":["Cho'Gath","Lillia"],"Mid":["Ekko","Heimerdinger","Veigar","Vex"],"Bot":["Xayah"],"Sup":["Braum","Leona","Rell"]}};
 const DD_CAT_DEFAULT = {"ver":"16.23.1","items":{"endlesshunger":"2517","steraksgage":"3053","blackcleaver":"3071","deathsdance":"6333","guardianangel":"3026","lorddominiksregards":"3036","mawofmalmortius":"3156","mortalreminder":"3033","executionerscalling":"3123","quicksilversash":"3140","ludensecho":"6655","shadowflame":"4645","rabadonsdeathcap":"3089","zhonyashourglass":"3157","voidstaff":"3135","bansheesveil":"3102","morellonomicon":"3165","hextechgunblade":"3146","krakenslayer":"6672","infinityedge":"3031","phantomdancer":"3046","zekesconvergence":"3050","locketoftheironsolari":"3190","knightsvow":"3109","thornmail":"3075","forceofnature":"4401","frozenheart":"3110","randuinsomen":"3143","stridebreaker":"6631","sunderedsky":"6610","sunfireaegis":"3068","kaenicrookern":"2504","jakshotheprotean":"6665","actualizer":"2522","liandrystorment":"6653","horizonfocus":"4628","fiendhunterbolts":"2512","nashorstooth":"3115","statikkshiv":"3087","whisperingcirclet":"2526","diademofsongs":"2530","ardentcenser":"3504","staffofflowingwater":"6616","bladeoftheruinedking":"3153","cryptbloom":"3137","bandlepipes":"2524","hexopticsc44":"2523","protoplasmharness":"2525","duskanddawn":"2510","rodofages":"6657","spiritvisage":"3065","youmuusghostblade":"3142","hubris":"6697","bastionbreaker":"2520","edgeofnight":"3814","seryldasgrudge":"6694","mercurystreads":"3111","platedsteelcaps":"3047","sorcerersshoes":"3020","berserkersgreaves":"3006","ionianbootsoflucidity":"3158","gluttonousgreaves":"3008","doransblade":"1055","doransring":"1056","doranshelm":"1120","doransshield":"1054","healthpotion":"2003","worldatlas":"3865","immortalshieldbow":"6673","profanehydra":"6698","voltaiccyclosword":"6699","bloodthirster":"3072","mercurialscimitar":"3139","mikaelsblessing":"3222","redemption":"3107","warmogsarmor":"3083","heartsteel":"3084","trinityforce":"3078","iceborngauntlet":"6662","titanichydra":"3748","riftmaker":"4633","lichbane":"3100","cosmicdrive":"4629","stormsurge":"4646","malignance":"3118","blackfiretorch":"2503","hollowradiance":"6664","unendingdespair":"2502","moonstonerenewer":"6617","echoesofhelia":"6620","dawncore":"6621","imperialmandate":"4005","shurelyasbattlesong":"2065","witsend":"3091","guinsoosrageblade":"3124","runaanshurricane":"3085","navoriflickerblade":"6675","thecollector":"6676","opportunity":"6701","axiomarc":"6696","serpentsfang":"6695","umbralglaive":"3179","eclipse":"6692","spearofshojin":"3161","ravenoushydra":"3074","hullbreaker":"3181","experimentalhexplate":"3073","abyssalmask":"8020","deadmansplate":"3742","anathemaschains":"8001","controlward":"2055","oraclelens":"3364","stealthward":"3340","farsightalteration":"3363","rapidfirecannon":"3094","lastwhisper":"3035","hexdrinker":"3155","sheen":"3057","tiamat":"3077"},"runes":{"electrocute":"perk-images/Styles/Domination/Electrocute/Electrocute.png","darkharvest":"perk-images/Styles/Domination/DarkHarvest/DarkHarvest.png","hailofblades":"perk-images/Styles/Domination/HailOfBlades/HailOfBlades.png","cheapshot":"perk-images/Styles/Domination/CheapShot/CheapShot.png","tasteofblood":"perk-images/Styles/Domination/TasteOfBlood/GreenTerror_TasteOfBlood.png","suddenimpact":"perk-images/Styles/Domination/SuddenImpact/SuddenImpact.png","sixthsense":"perk-images/Styles/Domination/SixthSense/SixthSense.png","grislymementos":"perk-images/Styles/Domination/GrislyMementos/GrislyMementos.png","deepward":"perk-images/Styles/Domination/DeepWard/DeepWard.png","treasurehunter":"perk-images/Styles/Domination/TreasureHunter/TreasureHunter.png","relentlesshunter":"perk-images/Styles/Domination/RelentlessHunter/RelentlessHunter.png","ultimatehunter":"perk-images/Styles/Domination/UltimateHunter/UltimateHunter.png","glacialaugment":"perk-images/Styles/Inspiration/GlacialAugment/GlacialAugment.png","unsealedspellbook":"perk-images/Styles/Inspiration/UnsealedSpellbook/UnsealedSpellbook.png","firststrike":"perk-images/Styles/Inspiration/FirstStrike/FirstStrike.png","hextechflashtraption":"perk-images/Styles/Inspiration/HextechFlashtraption/HextechFlashtraption.png","magicalfootwear":"perk-images/Styles/Inspiration/MagicalFootwear/MagicalFootwear.png","cashback":"perk-images/Styles/Inspiration/CashBack/CashBack2.png","tripletonic":"perk-images/Styles/Inspiration/PerfectTiming/AlchemistCabinet.png","timewarptonic":"perk-images/Styles/Inspiration/TimeWarpTonic/TimeWarpTonic.png","biscuitdelivery":"perk-images/Styles/Inspiration/BiscuitDelivery/BiscuitDelivery.png","cosmicinsight":"perk-images/Styles/Inspiration/CosmicInsight/CosmicInsight.png","approachvelocity":"perk-images/Styles/Resolve/ApproachVelocity/ApproachVelocity.png","jackofalltrades":"perk-images/Styles/Inspiration/JackOfAllTrades/JackofAllTrades2.png","presstheattack":"perk-images/Styles/Precision/PressTheAttack/PressTheAttack.png","lethaltempo":"perk-images/Styles/Precision/LethalTempo/LethalTempoTemp.png","fleetfootwork":"perk-images/Styles/Precision/FleetFootwork/FleetFootwork.png","conqueror":"perk-images/Styles/Precision/Conqueror/Conqueror.png","absorblife":"perk-images/Styles/Precision/AbsorbLife/AbsorbLife.png","triumph":"perk-images/Styles/Precision/Triumph.png","presenceofmind":"perk-images/Styles/Precision/PresenceOfMind/PresenceOfMind.png","legendalacrity":"perk-images/Styles/Precision/LegendAlacrity/LegendAlacrity.png","legendhaste":"perk-images/Styles/Precision/LegendHaste/LegendHaste.png","legendbloodline":"perk-images/Styles/Precision/LegendBloodline/LegendBloodline.png","coupdegrace":"perk-images/Styles/Precision/CoupDeGrace/CoupDeGrace.png","cutdown":"perk-images/Styles/Precision/CutDown/CutDown.png","laststand":"perk-images/Styles/Sorcery/LastStand/LastStand.png","graspoftheundying":"perk-images/Styles/Resolve/GraspOfTheUndying/GraspOfTheUndying.png","aftershock":"perk-images/Styles/Resolve/VeteranAftershock/VeteranAftershock.png","guardian":"perk-images/Styles/Resolve/Guardian/Guardian.png","demolish":"perk-images/Styles/Resolve/Demolish/Demolish.png","fontoflife":"perk-images/Styles/Resolve/FontOfLife/FontOfLife.png","shieldbash":"perk-images/Styles/Resolve/MirrorShell/MirrorShell.png","conditioning":"perk-images/Styles/Resolve/Conditioning/Conditioning.png","secondwind":"perk-images/Styles/Resolve/SecondWind/SecondWind.png","boneplating":"perk-images/Styles/Resolve/BonePlating/BonePlating.png","overgrowth":"perk-images/Styles/Resolve/Overgrowth/Overgrowth.png","revitalize":"perk-images/Styles/Resolve/Revitalize/Revitalize.png","unflinching":"perk-images/Styles/Sorcery/Unflinching/Unflinching.png","summonaery":"perk-images/Styles/Sorcery/SummonAery/SummonAery.png","arcanecomet":"perk-images/Styles/Sorcery/ArcaneComet/ArcaneComet.png","stormraiderssurge":"perk-images/Styles/Sorcery/PhaseRush/StormraidersSurgeRuneIcon2.png","deathfiretouch":"perk-images/Styles/Sorcery/DeathfireTouch/DEATHFIRE_TOUCH_KEYSTONE.png","axiomarcanist":"perk-images/Styles/Sorcery/NullifyingOrb/Axiom_Arcanist.png","manaflowband":"perk-images/Styles/Sorcery/ManaflowBand/ManaflowBand.png","nimbuscloak":"perk-images/Styles/Sorcery/NimbusCloak/6361.png","transcendence":"perk-images/Styles/Sorcery/Transcendence/Transcendence.png","celerity":"perk-images/Styles/Sorcery/Celerity/CelerityTemp.png","absolutefocus":"perk-images/Styles/Sorcery/AbsoluteFocus/AbsoluteFocus.png","scorch":"perk-images/Styles/Sorcery/Scorch/Scorch.png","waterwalking":"perk-images/Styles/Sorcery/Waterwalking/Waterwalking.png","gatheringstorm":"perk-images/Styles/Sorcery/GatheringStorm/GatheringStorm.png"},"trees":{"domination":"perk-images/Styles/7200_Domination.png","inspiration":"perk-images/Styles/7203_Whimsy.png","precision":"perk-images/Styles/7201_Precision.png","resolve":"perk-images/Styles/7204_Resolve.png","sorcery":"perk-images/Styles/7202_Sorcery.png"},"spells":{"barrier":"SummonerBarrier.png","cleanse":"SummonerBoost.png","exhaust":"SummonerExhaust.png","flash":"SummonerFlash.png","ghost":"SummonerHaste.png","heal":"SummonerHeal.png","ignite":"SummonerDot.png","smite":"SummonerSmite.png","teleport":"SummonerTeleport.png"}};
@@ -4802,10 +4345,8 @@ function loadRealData() {
   ROLE_RATES = (r && typeof r === 'object') ? r : ROLE_RATES_DEFAULT;
   _cby = new Map();
 }
-const _afterDataChangeBase = afterDataChange;
-afterDataChange = function () { loadRealData(); _afterDataChangeBase(); };
-const _clearCachesBase = clearCaches;
-clearCaches = function () { _clearCachesBase(); _cby = new Map(); };
+function afterDataChange__n() { loadRealData(); afterDataChange__base(); }
+function clearCaches() { clearCaches__base(); _cby = new Map(); }
 
 function adjWR(wr, g, k) { return 50 + (wr - 50) * g / (g + (k || 60)); }
 // Avantatge de c contra e a la línia, en punts de WR (ajustat per mostra). real=true si ve de winrates reals.
@@ -4834,14 +4375,14 @@ function synScore(a, b) {
 }
 
 // Reactius de veritat: la llista curada original (Malphite, Poppy, Pyke...), no tots els campions amb dades
-blindWeakness = function (c) { const un = getUnavailableChamps(); return counteredBy(c).filter(e => !un.has(e)).length; };
-isReactive = function (c) {
+function blindWeakness(c) { const un = getUnavailableChamps(); return counteredBy(c).filter(e => !un.has(e)).length; }
+function isReactive(c) {
   if (!_reactive) _reactive = new Set(Object.keys((DEFAULTS && DEFAULTS.counters) || {}));
   return _reactive.has(c);
-};
+}
 
 // Repartiment de rols segons la taxa de pick real per rol (metabot.gg)
-roleDistOfChamp = function (c) {
+function roleDistOfChamp(c) {
   const r = ROLE_RATES[c], rs = champRoles(c);
   if (r) {
     const v = r.map((x, i) => Math.max(x || 0, rs.includes(ROLE_ORDER[i]) ? 0.05 : 0));
@@ -4851,8 +4392,8 @@ roleDistOfChamp = function (c) {
   const d = [0, 0, 0, 0, 0];
   rs.forEach(x => { d[ROLE_ORDER.indexOf(x)] += 1 / rs.length; });
   return d;
-};
-enemyRoleInfo = function () {
+}
+function enemyRoleInfo() {
   const champs = getEnemyPicks().filter(Boolean), locks = state.enemyLocks || {};
   const key = 'N|' + champs.map(c => c + ':' + (locks[c] || '')).join('|');
   if (_enemyCache.has(key)) return _enemyCache.get(key);
@@ -4873,7 +4414,7 @@ enemyRoleInfo = function () {
   const info = { champs, count: res.count, dist: res.dist, ambiguous: champs.some(c => res.dist[c].filter(x => x > 0.15).length > 1) };
   _enemyCache.set(key, info);
   return info;
-};
+}
 // Probabilitat que cada rol del rival encara estigui per cobrir
 function enemyMiss(info, enemy) {
   const m = [1, 1, 1, 1, 1];
@@ -4930,13 +4471,12 @@ function draftPos() {
   const nextOurs = Boolean(ours && nx && nx.type === 'PICK' && nx.side === state.ourSide && !getOurPicks()[nx.index] && !getOurPicks()[index]);
   return { enemyAfter, nextOurs, nextIdx: nextOurs ? nx.index : -1 };
 }
-const _phaseAdviceBase = phaseAdviceHtml;
-phaseAdviceHtml = function (k) {
+function phaseAdviceHtml(k) {
   const pos = draftPos();
   if (pos.enemyAfter === 0) return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
   if (k >= 3) return `<br><span style="color:var(--gold);">🧠 Pick final vostre, però el rival encara en té ${pos.enemyAfter}:</span> us pot respondre. Eviteu picks que tinguin counters disponibles al rol que li falta i guardeu el counter-pick per a l'últim slot si en teniu.`;
-  return _phaseAdviceBase(k);
-};
+  return phaseAdviceHtml__base(k);
+}
 
 // ---- Fitxa del rival (scouting) ----
 const SCOUT_KEY = 'hextech_enemyscout_v1';
@@ -4971,7 +4511,7 @@ function scoutPool() {
   _scoutCache = m; return m;
 }
 function scoutText(s) { return `${s.who}: ${s.games} partides${s.wr && s.wr !== 50 ? ', ' + s.wr + '%' : ''}`; }
-function scoutAnalyze() {
+function scoutAnalyze__base() {
   state.scout.team = (document.getElementById('scoutTeam') || {}).value || '';
   state.scout.players.forEach((p, i) => {
     const n = document.getElementById('scoutName_' + i), t = document.getElementById('scoutText_' + i), r = document.getElementById('scoutRole_' + i);
@@ -4989,7 +4529,7 @@ function scoutClear() {
 }
 let _scoutOpen = false;
 function toggleScout() { _scoutOpen = !_scoutOpen; renderScout(); }
-function renderScout() {
+function renderScout__base() {
   const el = document.getElementById('scoutPanel'); if (!el) return;
   const s = state.scout, n = s.players.filter(p => p.champs.length).length;
   const summary = n
@@ -5007,34 +4547,20 @@ function renderScout() {
       <div style="font-size:0.8rem;font-weight:700;color:#FF8A9B;">📋 Fitxa del rival${s.team ? ': ' + escapeHtml(s.team) : ''}</div>
       <button class="btn" onclick="toggleScout()">${_scoutOpen ? 'Tanca' : (n ? '✏️ Edita' : '➕ Omple')}</button></div>${summary}${form}`;
 }
-const _updateEnemyOtpsBase = updateEnemyOtps;
-updateEnemyOtps = function () {
-  _updateEnemyOtpsBase();
+function updateEnemyOtps() {
+  updateEnemyOtps__base();
   const inp = document.getElementById('enemyOtpInput');
   if (inp && state.scout) { state.scout.otps = inp.value; saveScout(); }
-};
+}
 (function restoreOtps() { const inp = document.getElementById('enemyOtpInput'); if (inp) inp.value = (state.scout && state.scout.otps) || ''; })();
 
 // ---- Historial de drafts propis (resultat) ----
 const HIST_KEY = 'hextech_drafthist_v1';
 function loadHist() { try { const h = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } }
 let DRAFT_HIST = loadHist(), _teamRec = null;
-function saveHist() { try { localStorage.setItem(HIST_KEY, JSON.stringify(DRAFT_HIST)); } catch (e) {} _teamRec = null; _assignCache.clear(); }
-function teamRec(p, c) {
-  if (!_teamRec) {
-    _teamRec = new Map();
-    DRAFT_HIST.forEach(h => (h.roles || []).forEach(x => {
-      if (!x.champ || !x.player) return;
-      const k = x.player + '|' + x.champ, v = _teamRec.get(k) || { w: 0, l: 0 };
-      if (h.result === 'W') v.w++; else v.l++;
-      _teamRec.set(k, v);
-    }));
-  }
-  return _teamRec.get(ROSTER[p].name + '|' + c) || null;
-}
+function saveHist__base() { try { localStorage.setItem(HIST_KEY, JSON.stringify(DRAFT_HIST)); } catch (e) {} _teamRec = null; _assignCache.clear(); }
 function teamRecBonus(p, c) { const r = teamRec(p, c); if (!r || r.w + r.l < 2) return 0; return Math.round(((r.w + 3) / (r.w + r.l + 6) - 0.5) * 30); }
-const _playerChampFitBase = playerChampFit;
-playerChampFit = function (p, r, c) { return _playerChampFitBase(p, r, c) + teamRecBonus(p, c); };
+function playerChampFit(p, r, c) { return playerChampFit__base(p, r, c) + teamRecBonus(p, c); }
 function recordDraft(result) {
   const us = getOurPicks().filter(Boolean);
   if (!us.length) return false;
@@ -5047,8 +4573,7 @@ function recordDraft(result) {
   saveHist(); renderHistory(); return true;
 }
 function saveDraftResult(result) { if (recordDraft(result)) { const el = document.getElementById('histSaved'); if (el) el.textContent = `✅ Desat (${result === 'W' ? 'victòria' : 'derrota'}). Total: ${DRAFT_HIST.length} drafts.`; } }
-const _closeGameBase = closeGame;
-closeGame = function (result) { recordDraft(result); _closeGameBase(result); };
+function closeGame(result) { recordDraft(result); closeGame__base(result); }
 function deleteHist(i) { DRAFT_HIST.splice(i, 1); saveHist(); renderHistory(); renderAll(); }
 function clearHist() { if (!DRAFT_HIST.length) return; DRAFT_HIST = []; saveHist(); renderHistory(); renderAll(); }
 function exportHist() {
@@ -5056,7 +4581,7 @@ function exportHist() {
   const done = () => { const el = document.getElementById('histMsg'); if (el) el.textContent = '📋 Historial copiat (JSON). Envia-me\'l si vols que el publiqui a les dades compartides.'; };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, done); else done();
 }
-function renderHistory() {
+function renderHistory__base() {
   let el = document.getElementById('histPanel');
   if (!el) { const tab = document.getElementById('tab-data'); if (!tab) return; el = document.createElement('div'); el.id = 'histPanel'; el.className = 'panel'; el.style.marginTop = '12px'; tab.appendChild(el); }
   const w = DRAFT_HIST.filter(h => h.result === 'W').length, n = DRAFT_HIST.length;
@@ -5072,7 +4597,7 @@ function renderHistory() {
 }
 
 // ---- Recomanació de picks (substitueix l'anterior) ----
-recommendChamps = function (ctx, excludeIdx) {
+function recommendChamps__n(ctx, excludeIdx) {
   ctx = ctx || buildCtx();
   const slots = getOurPicks();
   const ally = slots.filter((c, i) => c && i !== excludeIdx);
@@ -5224,10 +4749,10 @@ recommendChamps = function (ctx, excludeIdx) {
     out.push({ champ: c, score, why });
   });
   return out.sort((a, b) => b.score - a.score);
-};
+}
 
 // ---- Bans ----
-recommendBans = function (ctx) {
+function recommendBans(ctx) {
   const ours = ctx.ourPicks, enemy = ctx.enemyPicks;
   const info = enemyRoleInfo(), miss = enemyMiss(info, enemy);
   const phase2 = ours.length + enemy.length > 0;
@@ -5269,10 +4794,10 @@ recommendBans = function (ctx) {
     out.push({ champ: c, score, why });
   });
   return out.sort((a, b) => b.score - a.score);
-};
+}
 
 // ---- Predicció del rival ----
-predictEnemy = function (ctx) {
+function predictEnemy(ctx) {
   const enemy = ctx.enemyPicks, ours = ctx.ourPicks;
   const eSide = state.ourSide === 'BLUE' ? 'RED' : 'BLUE';
   const unavailable = getUnavailableChamps(eSide);
@@ -5312,14 +4837,14 @@ predictEnemy = function (ctx) {
   const z = top.reduce((s, x) => s + Math.exp(x.score / 7), 0);
   top.forEach(x => { x.prob = Math.exp(x.score / 7) / z; });
   return top;
-};
-ourAnswersTo = function (enemyChamp, ctx) {
+}
+function ourAnswersTo(enemyChamp, ctx) {
   const pool = [...new Set(ROSTER.flatMap(p => p.pool))];
   return pool.filter(c => !ctx.unavailable.has(c)).map(c => ({ c, a: muScore(c, enemyChamp).adv })).filter(x => x.a >= 2.5 && distOverlap(roleDistOfChamp(x.c), roleDistOfChamp(enemyChamp)) > 0.15).sort((a, b) => b.a - a.a).slice(0, 2).map(x => x.c);
-};
+}
 
 // ---- Matchups de línia i tooltips amb WR real ----
-laneMatchup = function (c, e, role) {
+function laneMatchup__n(c, e, role) {
   let score = 0;
   const notes = [];
   const m = muScore(c, e);
@@ -5343,8 +4868,8 @@ laneMatchup = function (c, e, role) {
   if (tc - tt >= 6) { score += 1; notes.push(`meta ${PATCH_META.tierSource || PATCH_META.patch}: ${c} ${tierIn(c, role) || '—'} vs ${e} ${tierIn(e, role) || '—'}`); }
   if (tt - tc >= 6) { score -= 1; notes.push(`meta ${PATCH_META.tierSource || PATCH_META.patch}: ${e} ${tierIn(e, role) || '—'} vs ${c} ${tierIn(c, role) || '—'}`); }
   return { score, notes };
-};
-counterCandidates = function (e, max = 3) {
+}
+function counterCandidates(e, max = 3) {
   const unavail = getUnavailableChamps();
   const info = enemyRoleInfo();
   const dist = ((info.dist && info.dist[e]) || roleDistOfChamp(e)).slice();
@@ -5372,13 +4897,13 @@ counterCandidates = function (e, max = 3) {
     out.push({ champ: c, pts: Math.round(pts * (0.6 + 0.4 * Math.min(1, ov))), why, src, who: who ? [...who].map(shortName) : [] });
   });
   return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-};
-realMatchupNote = function (c, e) {
+}
+function realMatchupNote(c, e) {
   const m = muScore(c, e);
   if (m.adv <= -2) return m.real ? `${e} et counteja: teniu ${m.wr}% en ${m.g} partides` : `${e} et counteja segons les llistes`;
   if (m.adv >= 2) return m.real ? `tu counteges ${e}: ${m.wr}% en ${m.g} partides` : `tu counteges ${e} segons les llistes`;
   return '';
-};
+}
 
 // ---- Picks dobles: millor parella ----
 function pairRecs(ctx, i1, i2, n) {
@@ -5412,15 +4937,13 @@ function saveResultHtml() {
   if (all < 10) return '';
   return `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><span style="color:var(--text-muted);">💾 Desa el resultat al vostre historial:</span><button class="btn" onclick="saveDraftResult('W')">✅ Victòria</button><button class="btn" onclick="saveDraftResult('L')">❌ Derrota</button><span id="histSaved" style="color:var(--text-muted);"></span></div>`;
 }
-const _getLiveAdviceBase = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  let h = _getLiveAdviceBase(ranked);
+function getLiveAdvice__n(ranked) {
+  let h = getLiveAdvice__base(ranked);
   try { h += pairAdviceHtml() + saveResultHtml(); } catch (e) { console.warn('pairAdvice', e); }
   return h;
-};
+}
 
-const _predictionHtmlBase = predictionHtml;
-predictionHtml = function (ctx, max) { if (draftPos().enemyAfter === 0 || ctx.enemyPicks.length >= 5) return ''; return _predictionHtmlBase(ctx, max); };
+function predictionHtml(ctx, max) { if (draftPos().enemyAfter === 0 || ctx.enemyPicks.length >= 5) return ''; return predictionHtml__base(ctx, max); }
 // ---- Notes del parc: ja oficials ----
 PATCH_META.note = 'Notes oficials del 26.23 (Riot, 17/11/2026): els canvis aplicats coincideixen amb la versió final.';
 loadRealData();
@@ -5459,8 +4982,7 @@ function mmUpdateTimer() {
   const left = Math.max(0, MM_SECS - Math.floor((Date.now() - MM.t0) / 1000));
   t.textContent = left + ' s'; t.className = 'mm-timer' + (left <= 5 ? ' mm-late' : left <= 10 ? ' mm-warnt' : '');
 }
-const _renderAllBaseO = renderAll;
-renderAll = function () { _renderAllBaseO.apply(this, arguments); if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } } };
+function renderAll() { renderAll__base.apply(this, arguments); if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } } }
 
 // ---- Accions ----
 function mmPick(c) { MM.search = false; MM.editing = false; MM.q = ''; pickChampion(c); }
@@ -5549,7 +5071,7 @@ function mmPairWho(a, b, i1, i2) {
     return [a, b].map(c => { const i = asg.roleChamp.indexOf(c); return i >= 0 ? `${escapeHtml(c)} → ${escapeHtml(shortName(asg.rolePlayer[i]))} · ${ROLE_ORDER[i]}` : escapeHtml(c); }).join(' &nbsp;|&nbsp; ');
   } catch (e) { return ''; }
 }
-function mmOurPick() {
+function mmOurPick__base() {
   const st = state.activeSlot, ctx = buildCtx(), pos = draftPos();
   let pairHtml = '';
   if (pos.nextOurs) {
@@ -5704,18 +5226,16 @@ function renderMatch() {
 let TEAM_ROLES = {};
 function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : {}; }
 loadTeamRoles();
-const _afterDataChangeBaseQ = afterDataChange;
-afterDataChange = function () { loadTeamRoles(); _afterDataChangeBaseQ(); };
+function afterDataChange__q() { loadTeamRoles(); afterDataChange__n(); }
 function viableRoles(c) {
   const pub = champRoles(c), extra = (TEAM_ROLES[c] || []).filter(r => ROLE_ORDER.includes(r));
   let v = pub;
   if (ROLE_RATES[c]) { const d = roleDistOfChamp(c), w = ROLE_ORDER.filter((r, i) => d[i] >= 0.05); if (w.length) v = w; }
   return extra.length ? ROLE_ORDER.filter(r => v.includes(r) || extra.includes(r)) : v;
 }
-const _ourRolesForBaseQ = ourRolesFor;
-ourRolesFor = function (c) { const b = _ourRolesForBaseQ(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; };
+function ourRolesFor(c) { const b = ourRolesFor__base(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; }
 // Quants picks poden tenir rol propi alhora, només amb rols viables (Corki, Smolder, Varus... compten com a Bot)
-maxRoleMatching = function (champs) {
+function maxRoleMatching(champs) {
   const matchRole = [-1, -1, -1, -1, -1];
   const roles = champs.map(viableRoles);
   const tryAssign = (i, seen) => {
@@ -5730,17 +5250,17 @@ maxRoleMatching = function (champs) {
   let m = 0;
   for (let i = 0; i < champs.length; i++) if (tryAssign(i, [false, false, false, false, false])) m++;
   return m;
-};
+}
 
 const TAG_FILTERS = [['eng', 'Engage'], ['poke', 'Poke'], ['scale', 'Escalat'], ['early', 'Early'], ['front', 'Frontline'], ['peel', 'Peel'], ['dive', 'Dive'], ['assn', 'Assassí'], ['combo', 'Combo AoE'], ['split', 'Split'], ['mob', 'Mobilitat'], ['rng', 'Rang'], ['ap', 'AP'], ['ad', 'AD']];
 state.tagFilters = new Set();
-setRoleFilter = function (role, pill) {
+function setRoleFilter(role, pill) {
   if (state.roleFilter === role && role !== 'ALL') role = 'ALL';
   state.roleFilter = role;
   const box = document.getElementById('roleFilters');
   if (box) box.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', (p.getAttribute('onclick') || '').includes(`'${role}'`)));
   renderChampGrid();
-};
+}
 function toggleTagFilter(tag) {
   if (state.tagFilters.has(tag)) state.tagFilters.delete(tag); else state.tagFilters.add(tag);
   renderTagFilters(); renderChampGrid();
@@ -5756,17 +5276,16 @@ function renderTagFilters() {
   el.innerHTML = TAG_FILTERS.map(([t, l]) => `<span class="pill ${state.tagFilters.has(t) ? 'active' : ''}" onclick="toggleTagFilter('${t}')">${l}</span>`).join('')
     + (state.tagFilters.size ? '<span class="pill pill-clear" onclick="clearTagFilters()">✕ Treu estils</span>' : '');
 }
-const _renderChampGridBaseQ = renderChampGrid;
-renderChampGrid = function () {
-  _renderChampGridBaseQ();
+function renderChampGrid() {
+  renderChampGrid__base();
   const grid = document.getElementById('champGrid');
   if (grid && state.tagFilters.size && !grid.querySelector('.champ-chip')) {
     grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.8rem;padding:8px;">Cap campió amb tots aquests estils (${[...state.tagFilters].map(t => (TAG_FILTERS.find(x => x[0] === t) || [t, t])[1]).join(' + ')})${state.roleFilter !== 'ALL' ? ' i aquest filtre' : ''}.</div>`;
   }
-};
+}
 
 // Sinergies amb duos reals inclosos
-synergyCandidates = function (x, max = 3) {
+function synergyCandidates(x, max = 3) {
   const unavail = getUnavailableChamps();
   const dx = roleDistOfChamp(x);
   const rx = ROLE_ORDER.filter((r, i) => dx[i] >= 0.3);
@@ -5793,12 +5312,12 @@ synergyCandidates = function (x, max = 3) {
     out.push({ champ: c, pts, why, src, real, who: who ? [...who].map(shortName) : [] });
   });
   return out.sort((a, b) => b.pts - a.pts).slice(0, max);
-};
+}
 // Tooltip net: una fila de 3 icones per a counters i una per a sinergies
 function tipCell(c, metric, who) {
   return `<div class="ct-cell">${champIcon(c, 54)}<div class="ct-name">${escapeHtml(c)}</div>${metric ? `<div class="ct-met">${escapeHtml(metric)}</div>` : ''}${who && who.length ? `<div class="ct-who">👤 ${escapeHtml(who.join('/'))}</div>` : ''}</div>`;
 }
-counterTipHtml = function (e) {
+function counterTipHtml(e) {
   const list = counterCandidates(e, 3);
   const info = enemyRoleInfo(), dist = (info.dist && info.dist[e]) || roleDistOfChamp(e);
   const roles = ROLE_ORDER.filter((r, i) => dist[i] >= 0.25).join('/') || champRoles(e).join('/');
@@ -5810,7 +5329,7 @@ counterTipHtml = function (e) {
   return `<div class="ct-head">${champIcon(e, 26)} <strong>${escapeHtml(e)}</strong> <small>${escapeHtml(roles)}</small></div>
     <div class="ct-sec">🛡️ Counters</div>${cRow}
     <div class="ct-sec">🤝 Sinergies${enemy ? ' <small>(les voldran ells)</small>' : ''}</div>${sRow}`;
-};
+}
 (function qStyles() {
   const css = `
   .tag-pills { margin-top:-4px; }
@@ -5909,13 +5428,12 @@ function groupComps() {
   COMPS.length = 0; out.forEach(c => COMPS.push(c));
   if (state.selectedCompId && !COMPS.some(c => c.id === state.selectedCompId)) state.selectedCompId = null;
 }
-const _generateCompsBaseR = generateComps;
-generateComps = function () {
+function generateComps() {
   // restaura les oficials abans de regenerar (les auto es tornen a crear)
   COMPS.forEach(c => { if (!c.gen && c.baseRoles) c.roles = JSON.parse(JSON.stringify(c.baseRoles)); });
-  _generateCompsBaseR();
+  generateComps__base();
   try { groupComps(); } catch (e) { console.warn('groupComps', e); }
-};
+}
 
 // ---------- 2. Finestra de compatibilitats amb icones ----------
 function compRoleHtml(comp, r, full) {
@@ -5936,7 +5454,7 @@ function compRoleHtml(comp, r, full) {
     ${full ? `<div class="cr-name">${escapeHtml(main || '')}</div>` : ''}
     <div class="cr-alts">${small}${more}</div>${metaAlt}</div>`;
 }
-renderCompsRanking = function (ranked) {
+function renderCompsRanking(ranked) {
   const LIMIT = 8;
   const list = state.showAllComps ? ranked : ranked.slice(0, LIMIT);
   const sel = state.selectedCompId && !list.some(c => c.id === state.selectedCompId) ? ranked.find(c => c.id === state.selectedCompId) : null;
@@ -5957,7 +5475,7 @@ renderCompsRanking = function (ranked) {
   const more = ranked.length > LIMIT
     ? `<div style="text-align:center;margin-top:6px;"><button class="btn" onclick="state.showAllComps=!state.showAllComps;renderAll()">${state.showAllComps ? 'Mostra\'n menys' : `Mostra totes (${ranked.length})`}</button></div>` : '';
   document.getElementById('compsRanking').innerHTML = cards + more;
-};
+}
 
 // ---------- 3. Icones de runes, encanteris i objectes (catàleg oficial de Data Dragon) ----------
 // Catàleg oficial verificat (Data Dragon 16.23.1) inclòs a l'app; s'actualitza sol quan surt una versió nova
@@ -6058,7 +5576,7 @@ function buildIconsHtml(b, uid) {
     <div class="bi-cap" id="bicap_${uid}"></div>
   </div>`;
 }
-renderBuildsHtml = function (s) {
+function renderBuildsHtml(s) {
   ddLoadCatalog();
   const blocks = s.lanes.filter(l => l.build).map((l, k) => {
     const b = l.build;
@@ -6075,7 +5593,7 @@ renderBuildsHtml = function (s) {
     <p style="color:var(--text-muted);font-size:0.72rem;margin-bottom:4px;">Base: la build més jugada a op.gg (Emerald+, parc 26.23) quan n'hi ha dades; si no, plantilla per arquetip. Després s'ajusta als dos drafts. Toca o passa per sobre d'una icona per veure'n el nom i el motiu. Icones oficials de Riot (Data Dragon); sense connexió es mostra el nom.</p>
     ${blocks || '<p>Assigna campions als rols per veure runes i build.</p>'}
   </div>`;
-};
+}
 (function biCaption() {
   const show = ev => {
     const g = ev.target.closest && ev.target.closest('.bi-box .gi'); if (!g) return;
@@ -6159,18 +5677,15 @@ function sharedRivalsHtml() {
     <select id="rvSel" onchange="if(this.value)loadSharedRival(this.value)"><option value="">Tria un rival…</option>${teams.map(t => `<option value="${escapeHtml(t.id)}" ${t.id === cur ? 'selected' : ''}>${escapeHtml(t.name || t.id)} (${escapeHtml(t.updated || '')})</option>`).join('')}</select>
     ${cur ? `<span class="rv-meta">Carregat: ${escapeHtml(state.scout.team)} · ${escapeHtml(state.scout.updated || '')}${state.scout.source ? ' · ' + escapeHtml(state.scout.source) : ''}</span>` : ''}</div>`;
 }
-const _renderScoutBaseS = renderScout;
-renderScout = function () {
-  _renderScoutBaseS();
+function renderScout() {
+  renderScout__base();
   const el = document.getElementById('scoutPanel'); if (!el) return;
   const h = sharedRivalsHtml(); if (!h) return;
   const d = document.createElement('div'); d.innerHTML = h; el.insertBefore(d.firstElementChild, el.children[2] || null);
-};
-const _afterDataChangeBaseS = afterDataChange;
-afterDataChange = function () { _afterDataChangeBaseS(); try { refreshSharedRival(); renderScout(); } catch (e) { console.warn('rivals', e); } };
+}
+function afterDataChange__s() { afterDataChange__q(); try { refreshSharedRival(); renderScout(); } catch (e) { console.warn('rivals', e); } }
 // En editar la fitxa a mà deixa de seguir la versió compartida
-const _scoutAnalyzeBaseS = scoutAnalyze;
-scoutAnalyze = function () { if (state.scout) { state.scout.sharedId = null; } _scoutAnalyzeBaseS(); };
+function scoutAnalyze() { if (state.scout) { state.scout.sharedId = null; } scoutAnalyze__base(); }
 (function sStyles() {
   const css = `.rv-box{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
   .rv-box select{background:#050B14;border:1px solid var(--border-gold);color:var(--text-main);border-radius:6px;padding:5px 8px;font-size:0.78rem;max-width:100%}
@@ -6275,18 +5790,16 @@ function slotSub(side, c) {
 let OP_PICKS = OP_PICKS_DEFAULT;
 function loadOpPicks() { const o = lsGet('hextech_oppicks_v1'); OP_PICKS = (o && o.roles) ? o : OP_PICKS_DEFAULT; }
 loadOpPicks();
-const _afterDataChangeBaseU = afterDataChange;
-afterDataChange = function () { loadOpPicks(); _afterDataChangeBaseU(); };
+function afterDataChange__u() { loadOpPicks(); afterDataChange__s(); }
 function isOpIn(c, r) { return ((OP_PICKS.roles || {})[r] || []).includes(c); }
 function inRolePool(c, r) { return ROSTER.some((pl, p) => poolOf(p, r).includes(c)); }
 const OP_BONUS = 14, COUNTER_BONUS = 12;
 // Afegeix (no substitueix) dos motius a la recomanació de picks:
 //  - OP del parc al vostre pool per a un rol vostre lliure on el rival encara no ha ensenyat el seu pick de línia
 //  - counter real (WR de matchup) al vostre pool contra un pick rival del mateix rol
-const _recommendChampsBaseU = recommendChamps;
-recommendChamps = function (ctx, excludeIdx) {
+function recommendChamps__u(ctx, excludeIdx) {
   ctx = ctx || buildCtx();
-  const out = _recommendChampsBaseU(ctx, excludeIdx);
+  const out = recommendChamps__n(ctx, excludeIdx);
   try {
     const slots = getOurPicks(), ally = slots.filter((c, i) => c && i !== excludeIdx);
     const open = ourOpenRoles(ally), info = enemyRoleInfo(), miss = enemyMiss(info, ctx.enemyPicks);
@@ -6318,7 +5831,7 @@ recommendChamps = function (ctx, excludeIdx) {
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('opCounter', e); }
   return out;
-};
+}
 // Línies destacades al quadre de recomanació en directe (torn de pick vostre)
 function opCounterAdviceHtml() {
   const st = state.activeSlot;
@@ -6331,22 +5844,20 @@ function opCounterAdviceHtml() {
   if (cts.length) h += `<br><span style="color:var(--blue);">🎯 Counters al vostre pool:</span> ${cts.map(r => `<strong>${escapeHtml(r.champ)}</strong> contra ${escapeHtml(r.flags.counter)}`).join(' · ')}`;
   return h;
 }
-const _getLiveAdviceBaseU = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  const h = _getLiveAdviceBaseU(ranked);
+function getLiveAdvice__u(ranked) {
+  const h = getLiveAdvice__n(ranked);
   let x = '';
   try { x = opCounterAdviceHtml(); } catch (e) { console.warn(e); }
   if (!x) return h;
   return h + x;
-};
+}
 // Distintius a les targetes (escriptori i mode partida)
 function flagBadges(r) {
   if (!r || !r.flags) return '';
   return (r.flags.op ? `<span class="fl-op" title="OP del parc a ${r.flags.op}">OP</span>` : '') + (r.flags.counter ? `<span class="fl-ct" title="Counter contra ${escapeHtml(r.flags.counter)}">Counter</span>` : '');
 }
-const _mmOurPickBaseU = mmOurPick;
-mmOurPick = function () {
-  let h = _mmOurPickBaseU();
+function mmOurPick() {
+  let h = mmOurPick__base();
   try {
     recommendChamps(buildCtx(), state.activeSlot.index).slice(0, 3).forEach(r => {
       const b = flagBadges(r); if (!b) return;
@@ -6354,7 +5865,7 @@ mmOurPick = function () {
     });
   } catch (e) {}
   return h;
-};
+}
 (function uStyles() {
   const css = `.fl-op, .fl-ct { display:inline-block; font-family:'Segoe UI',system-ui,sans-serif; font-size:0.6rem; font-weight:800; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-left:3px; letter-spacing:0; }
   .fl-op { background:var(--gold); color:#010A13; }
@@ -6433,15 +5944,14 @@ function recSelect(c) {
 function recPick(c) { _recSel = null; pickChampion(c); }
 let _recDetailOpen = false;
 function toggleRecDetail() { _recDetailOpen = !_recDetailOpen; const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen); }
-const _getLiveAdviceBaseV = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  const h = _getLiveAdviceBaseV(ranked);
+function getLiveAdvice(ranked) {
+  const h = getLiveAdvice__u(ranked);
   let g = '';
   try { g = recGridHtml(); } catch (e) { console.warn('recGrid', e); }
   try { const b = document.getElementById('liveAdviceBox'); if (b) b.classList.toggle('rec-open', _recDetailOpen || !g); } catch (e) {}
   if (!g) return h;
   return `${g}<button class="rec-toggle" onclick="toggleRecDetail()"><span class="rm">Mostra el detall en text</span><span class="rl">Amaga el detall</span></button><div class="rec-detail">${h}</div>`;
-};
+}
 (function vStyles() {
   const css = `
   #liveAdviceBox > strong { display: none; }
@@ -6602,8 +6112,7 @@ function loadRealBuilds() {
   else REAL_BUILDS = REAL_BUILDS_DEFAULT;
 }
 loadRealBuilds();
-const _afterDataChangeBaseW = afterDataChange;
-afterDataChange = function () { loadRealBuilds(); _afterDataChangeBaseW(); };
+function afterDataChange__w() { loadRealBuilds(); afterDataChange__u(); }
 // Icones que el catàleg desat encara no tenia (Data Dragon les afegeix sol si hi ha connexió)
 (function addItemIds() {
   try {
@@ -6626,8 +6135,7 @@ function realBuildOf(c, role) { const r = REAL_BUILDS[c + '|' + role]; return r 
 const JG_PET = { TK: 'Mosstomper Seedling', TS: 'Mosstomper Seedling', DA: 'Scorchclaw Pup', AA: 'Scorchclaw Pup', SK: 'Scorchclaw Pup' };
 const CARRY_ARCH = new Set(['MK', 'MG', 'AA', 'DA', 'MS', 'OH']);
 // Aplica la build real com a base abans de la personalització per aquesta partida
-const _personalizeBuildBaseW = personalizeBuild;
-personalizeBuild = function (adv, c, role, x) {
+function personalizeBuild(adv, c, role, x) {
   const rb = realBuildOf(c, role);
   let a = adv;
   if (rb) {
@@ -6639,9 +6147,9 @@ personalizeBuild = function (adv, c, role, x) {
   } else if (role === 'Jg') {
     a = { ...adv, start: `${JG_PET[adv.arch] || 'Gustwalker Hatchling'} + Health Potion` };
   }
-  const r = _personalizeBuildBaseW(a, c, role, x);
+  const r = personalizeBuild__base(a, c, role, x);
   return finishBuild(r, a, c, role, x);
-};
+}
 function finishBuild(r, a, c, role, x) {
   const rb = a.real, out = { ...r };
   // Inici: l'ajust per rival de rang a top es manté; la jungla sempre comença amb mascota
@@ -6858,9 +6366,8 @@ function groupedThreats(s, carry) {
   const score = list => list.reduce((a, e) => a + (hasTag(e, 'assn') ? 3 : 0) + (hasTag(e, 'eng') ? 2 : 0) + (hasTag(e, 'dive') ? 2 : 0) + (hasTag(e, 'poke') ? 1 : 0) + (hasTag(e, 'scale') ? 1 : 0), 0);
   return [...by.entries()].sort((a, b) => score(b[1]) - score(a[1])).map(([t, list]) => ({ champ: list.join(', '), txt: escapeHtml(t) }));
 }
-const _buildStrategyBaseW = buildStrategy;
-buildStrategy = function () {
-  const s = _buildStrategyBaseW();
+function buildStrategy() {
+  const s = buildStrategy__base();
   try {
     const carry = mainCarry(s.lanes);
     s.deep = { tf: teamfightPlan(s), obj: objectivePlan(s), lanes: s.lanes.map(l => ({ l, txt: laneDetail(l, s), job: roleJob(l, s, carry, engagersOf(s.lanes)) })).filter(x => x.txt), carry };
@@ -6874,7 +6381,7 @@ buildStrategy = function () {
     });
   } catch (e) { console.warn('deepPlan', e); }
   return s;
-};
+}
 function deepPlanHtml(s) {
   if (!s.deep) return '';
   return `<div class="strat-card" style="grid-column: 1 / -1;">
@@ -6886,9 +6393,8 @@ function deepPlanHtml(s) {
     <p class="dp-src">Els winrates de línia són de partides reals (Metabot, Emerald+). La resta són regles a partir de les etiquetes dels campions; feu-les servir com a punt de partida, no com a veritat absoluta.</p>
   </div>`;
 }
-const _generateStrategyBaseW = generateStrategy;
-generateStrategy = function () {
-  _generateStrategyBaseW();
+function generateStrategy() {
+  generateStrategy__base();
   try {
     const s = buildStrategy(), el = document.getElementById('strategyContent');
     if (!el || !s.deep) return;
@@ -6897,7 +6403,7 @@ generateStrategy = function () {
     const tmp = document.createElement('div'); tmp.innerHTML = deepPlanHtml(s);
     if (anchor && tmp.firstElementChild) anchor.insertAdjacentElement('afterend', tmp.firstElementChild);
   } catch (e) { console.warn('deepPlanHtml', e); }
-};
+}
 const _copyDiscordPlanBaseW = typeof copyDiscordPlan === 'function' ? copyDiscordPlan : null;
 (function wStyles() {
   const css = `.dp-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:0.8rem; }
@@ -6918,7 +6424,7 @@ function allHist() {
   [...sharedHist(), ...DRAFT_HIST].forEach(h => { if (!h || !h.result) return; const k = histKey(h); if (seen.has(k)) return; seen.add(k); out.push(h); });
   return out;
 }
-teamRec = function (p, c) {
+function teamRec(p, c) {
   if (!_teamRec) {
     _teamRec = new Map();
     allHist().forEach(h => (h.roles || []).forEach(x => {
@@ -6929,7 +6435,7 @@ teamRec = function (p, c) {
     }));
   }
   return _teamRec.get(ROSTER[p].name + '|' + c) || null;
-};
+}
 let _duoRec = null;
 function duoRec(a, b) {
   if (!_duoRec) {
@@ -6945,15 +6451,12 @@ function duoRec(a, b) {
   }
   return _duoRec.get([a, b].sort().join('|')) || null;
 }
-const _saveHistBaseX = saveHist;
-saveHist = function () { _saveHistBaseX(); _duoRec = null; };
-const _afterDataChangeBaseX = afterDataChange;
-afterDataChange = function () { _teamRec = null; _duoRec = null; try { _assignCache.clear(); } catch (e) {} _afterDataChangeBaseX(); };
+function saveHist() { saveHist__base(); _duoRec = null; }
+function afterDataChange() { _teamRec = null; _duoRec = null; try { _assignCache.clear(); } catch (e) {} afterDataChange__w(); }
 
 // --- 2. Recomanacions: parelles que ja heu jugat juntes (mínim 2 partides, mostra encongida) ---
-const _recommendChampsBaseX = recommendChamps;
-recommendChamps = function (ctx, excludeIdx) {
-  const out = _recommendChampsBaseX(ctx, excludeIdx);
+function recommendChamps(ctx, excludeIdx) {
+  const out = recommendChamps__u(ctx, excludeIdx);
   try {
     const ally = getOurPicks().filter((c, i) => c && i !== excludeIdx);
     if (!ally.length || !allHist().length) return out;
@@ -6968,12 +6471,11 @@ recommendChamps = function (ctx, excludeIdx) {
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('duoRec', e); }
   return out;
-};
+}
 
 // --- 3. Veredicte de línia: un winrate real clar mana sobre les regles generals ---
-const _laneMatchupBaseX = laneMatchup;
-laneMatchup = function (c, e, role) {
-  const r = _laneMatchupBaseX(c, e, role);
+function laneMatchup(c, e, role) {
+  const r = laneMatchup__n(c, e, role);
   try {
     const m = muScore(c, e);
     if (!m.real || Math.abs(m.adv) < 2.5) return r;
@@ -6986,10 +6488,10 @@ laneMatchup = function (c, e, role) {
     const score = sign > 0 ? Math.max(capped, 2) : Math.min(capped, -2);
     return { score, notes: r.notes };
   } catch (err) { return r; }
-};
+}
 
 // --- 4. Text de Discord: instruccions per jugador sense campions aliens + pla detallat ---
-copyDiscordPlan = function () {
+function copyDiscordPlan() {
   const s = buildStrategy();
   const { comp, B } = s;
   let text = `🏆 **PLA DE PARTIDA — ${comp.name.toUpperCase()} (${state.ourSide} SIDE)**\n`;
@@ -7019,24 +6521,22 @@ copyDiscordPlan = function () {
   text += buildsDiscordText(s);
   const parts = splitDiscord(text);
   const out = parts.map((pt, i) => (i === 0 ? '' : `\n⸻ MISSATGE ${i + 1} ⸻\n`) + pt).join('');
-  const done = () => alert(parts.length > 1
-    ? `✅ Pla copiat en ${parts.length} missatges (separats per "⸻ MISSATGE n ⸻", límit de Discord: 2000 caràcters). Enganxa'ls per separat.`
-    : '✅ Pla de partida copiat al porta-retalls llest per enganxar a Discord!');
-  try { navigator.clipboard.writeText(out).then(done, done); } catch (e) { done(); }
+  deliverPlanText(out, parts.length);
   return out;
-};
+}
+// Escriptori: porta-retalls i avís. El mòbil la substitueix pel full de compartir del sistema.
+function deliverPlanText(out) { shareText('Pla de partida', out, ''); }
 
 // --- 5. Historial: indica quantes partides venen de l'equip (compartides) ---
-const _renderHistoryBaseX = renderHistory;
-renderHistory = function () {
-  _renderHistoryBaseX();
+function renderHistory() {
+  renderHistory__base();
   try {
     const el = document.getElementById('histPanel'); if (!el) return;
     const sh = sharedHist().length, all = allHist(), w = all.filter(h => h.result === 'W').length;
     const t = el.querySelector('.panel-title + div');
     if (t) t.innerHTML = `${all.length ? `${all.length} partides en total (${sh} compartides per l'equip, ${DRAFT_HIST.length} d'aquest dispositiu) · ${w}V-${all.length - w}D. El motor en té en compte el resultat per jugador i campió i per parelles de campions (a partir de 2 partides).` : 'Encara no hi ha partides desades. En acabar un draft, desa el resultat (✅/❌).'}<br><span style="color:var(--text-muted);">Per compartir les d'aquest dispositiu amb tot l'equip: «Copia l'historial» i envia-m'ho.</span>`;
   } catch (e) {}
-};
+}
 
 init();
 // ================= APP MÒBIL: NAVEGACIÓ, EL MEU JOC I COMPARTIR =================

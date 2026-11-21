@@ -31,8 +31,7 @@ function mmUpdateTimer() {
   const left = Math.max(0, MM_SECS - Math.floor((Date.now() - MM.t0) / 1000));
   t.textContent = left + ' s'; t.className = 'mm-timer' + (left <= 5 ? ' mm-late' : left <= 10 ? ' mm-warnt' : '');
 }
-const _renderAllBaseO = renderAll;
-renderAll = function () { _renderAllBaseO.apply(this, arguments); if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } } };
+function renderAll() { renderAll__base.apply(this, arguments); if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } } }
 
 // ---- Accions ----
 function mmPick(c) { MM.search = false; MM.editing = false; MM.q = ''; pickChampion(c); }
@@ -121,7 +120,7 @@ function mmPairWho(a, b, i1, i2) {
     return [a, b].map(c => { const i = asg.roleChamp.indexOf(c); return i >= 0 ? `${escapeHtml(c)} → ${escapeHtml(shortName(asg.rolePlayer[i]))} · ${ROLE_ORDER[i]}` : escapeHtml(c); }).join(' &nbsp;|&nbsp; ');
   } catch (e) { return ''; }
 }
-function mmOurPick() {
+function mmOurPick__base() {
   const st = state.activeSlot, ctx = buildCtx(), pos = draftPos();
   let pairHtml = '';
   if (pos.nextOurs) {

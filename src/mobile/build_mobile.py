@@ -153,8 +153,8 @@ script=sub1(r"function switchTab\(tabId, btn\) \{.*?\n\}\n",'',script)
 script=sub1(r"function openDataTab\(\) \{.*?\n\}\n",'',script)
 script=sub1(r"  const sec = document.getElementById\('strategySection'\);\n  sec.style.display = 'block';\n  sec.scrollIntoView\(\{ behavior: 'smooth' \}\);",
  "  const sec = document.getElementById('strategySection');\n  sec.style.display = 'block';\n  makeCollapsible(document.getElementById('strategyContent'));",script)
-script=sub1(r"  navigator\.clipboard\.writeText\(out\)\.then\(\(\) => \{.*?\n  \}\);\n\}",
- "  shareText('Pla de partida', out, '');\n}",script)
+script=sub1(r"function deliverPlanText\(out, nParts\) \{.*?\n\}\n",
+ "function deliverPlanText(out) { shareText('Pla de partida', out, ''); }\n",script)
 tail='''
 // taules -> targetes (data-label)
 function labelTables(){

@@ -3,18 +3,16 @@
 let OP_PICKS = OP_PICKS_DEFAULT;
 function loadOpPicks() { const o = lsGet('hextech_oppicks_v1'); OP_PICKS = (o && o.roles) ? o : OP_PICKS_DEFAULT; }
 loadOpPicks();
-const _afterDataChangeBaseU = afterDataChange;
-afterDataChange = function () { loadOpPicks(); _afterDataChangeBaseU(); };
+function afterDataChange__u() { loadOpPicks(); afterDataChange__s(); }
 function isOpIn(c, r) { return ((OP_PICKS.roles || {})[r] || []).includes(c); }
 function inRolePool(c, r) { return ROSTER.some((pl, p) => poolOf(p, r).includes(c)); }
 const OP_BONUS = 14, COUNTER_BONUS = 12;
 // Afegeix (no substitueix) dos motius a la recomanació de picks:
 //  - OP del parc al vostre pool per a un rol vostre lliure on el rival encara no ha ensenyat el seu pick de línia
 //  - counter real (WR de matchup) al vostre pool contra un pick rival del mateix rol
-const _recommendChampsBaseU = recommendChamps;
-recommendChamps = function (ctx, excludeIdx) {
+function recommendChamps__u(ctx, excludeIdx) {
   ctx = ctx || buildCtx();
-  const out = _recommendChampsBaseU(ctx, excludeIdx);
+  const out = recommendChamps__n(ctx, excludeIdx);
   try {
     const slots = getOurPicks(), ally = slots.filter((c, i) => c && i !== excludeIdx);
     const open = ourOpenRoles(ally), info = enemyRoleInfo(), miss = enemyMiss(info, ctx.enemyPicks);
@@ -46,7 +44,7 @@ recommendChamps = function (ctx, excludeIdx) {
     out.sort((a, b) => b.score - a.score);
   } catch (e) { console.warn('opCounter', e); }
   return out;
-};
+}
 // Línies destacades al quadre de recomanació en directe (torn de pick vostre)
 function opCounterAdviceHtml() {
   const st = state.activeSlot;
@@ -59,22 +57,20 @@ function opCounterAdviceHtml() {
   if (cts.length) h += `<br><span style="color:var(--blue);">🎯 Counters al vostre pool:</span> ${cts.map(r => `<strong>${escapeHtml(r.champ)}</strong> contra ${escapeHtml(r.flags.counter)}`).join(' · ')}`;
   return h;
 }
-const _getLiveAdviceBaseU = getLiveAdvice;
-getLiveAdvice = function (ranked) {
-  const h = _getLiveAdviceBaseU(ranked);
+function getLiveAdvice__u(ranked) {
+  const h = getLiveAdvice__n(ranked);
   let x = '';
   try { x = opCounterAdviceHtml(); } catch (e) { console.warn(e); }
   if (!x) return h;
   return h + x;
-};
+}
 // Distintius a les targetes (escriptori i mode partida)
 function flagBadges(r) {
   if (!r || !r.flags) return '';
   return (r.flags.op ? `<span class="fl-op" title="OP del parc a ${r.flags.op}">OP</span>` : '') + (r.flags.counter ? `<span class="fl-ct" title="Counter contra ${escapeHtml(r.flags.counter)}">Counter</span>` : '');
 }
-const _mmOurPickBaseU = mmOurPick;
-mmOurPick = function () {
-  let h = _mmOurPickBaseU();
+function mmOurPick() {
+  let h = mmOurPick__base();
   try {
     recommendChamps(buildCtx(), state.activeSlot.index).slice(0, 3).forEach(r => {
       const b = flagBadges(r); if (!b) return;
@@ -82,7 +78,7 @@ mmOurPick = function () {
     });
   } catch (e) {}
   return h;
-};
+}
 (function uStyles() {
   const css = `.fl-op, .fl-ct { display:inline-block; font-family:'Segoe UI',system-ui,sans-serif; font-size:0.6rem; font-weight:800; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-left:3px; letter-spacing:0; }
   .fl-op { background:var(--gold); color:#010A13; }
