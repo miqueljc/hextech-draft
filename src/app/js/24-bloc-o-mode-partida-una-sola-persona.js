@@ -31,7 +31,6 @@ function mmUpdateTimer() {
   const left = Math.max(0, MM_SECS - Math.floor((Date.now() - MM.t0) / 1000));
   t.textContent = left + ' s'; t.className = 'mm-timer' + (left <= 5 ? ' mm-late' : left <= 10 ? ' mm-warnt' : '');
 }
-function renderAll() { renderAll__base.apply(this, arguments); if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } } }
 
 // ---- Accions ----
 function mmPick(c) { MM.search = false; MM.editing = false; MM.q = ''; pickChampion(c); }
@@ -120,7 +119,7 @@ function mmPairWho(a, b, i1, i2) {
     return [a, b].map(c => { const i = asg.roleChamp.indexOf(c); return i >= 0 ? `${escapeHtml(c)} → ${escapeHtml(shortName(asg.rolePlayer[i]))} · ${ROLE_ORDER[i]}` : escapeHtml(c); }).join(' &nbsp;|&nbsp; ');
   } catch (e) { return ''; }
 }
-function mmOurPick__base() {
+function mmOurPick() {
   const st = state.activeSlot, ctx = buildCtx(), pos = draftPos();
   let pairHtml = '';
   if (pos.nextOurs) {
@@ -133,7 +132,7 @@ function mmOurPick__base() {
     }
   }
   const recs = recommendChamps(ctx, st.index).slice(0, 3);
-  return pairHtml + recs.map((r, k) => `<div class="mm-card"><div class="mm-card-h"><span class="mm-ch">${champIcon(r.champ, 44)}<b>${escapeHtml(r.champ)}</b></span><span class="mm-pts">${r.score}</span></div>
+  return pairHtml + recs.map((r, k) => `<div class="mm-card"><div class="mm-card-h"><span class="mm-ch">${champIcon(r.champ, 44)}<b>${escapeHtml(r.champ)}</b>${flagBadges(r) ? ' ' + flagBadges(r) : ''}</span><span class="mm-pts">${r.score}</span></div>
       <div class="mm-who">${mmWho(r.champ, st.index)}</div>${mmReasons(r, 2)}
       <div class="mm-btns"><button class="btn btn-primary" ${mmAttr(r.champ)} onclick="mmPick(this.dataset.c)">✅ Tria</button><button class="btn" onclick="mmWhy(${k})">${MM.why === k ? 'Amaga' : 'Per què'}</button></div>
       ${MM.why === k ? mmFullWhy(r) : ''}</div>`).join('') + mmOtherBtn('Un altre campió…');

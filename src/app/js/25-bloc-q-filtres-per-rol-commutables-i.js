@@ -6,14 +6,12 @@
 let TEAM_ROLES = {};
 function loadTeamRoles() { const t = lsGet('hextech_teamroles_v1'); TEAM_ROLES = (t && typeof t === 'object') ? t : {}; }
 loadTeamRoles();
-function afterDataChange__q() { loadTeamRoles(); afterDataChange__n(); }
 function viableRoles(c) {
   const pub = champRoles(c), extra = (TEAM_ROLES[c] || []).filter(r => ROLE_ORDER.includes(r));
   let v = pub;
   if (ROLE_RATES[c]) { const d = roleDistOfChamp(c), w = ROLE_ORDER.filter((r, i) => d[i] >= 0.05); if (w.length) v = w; }
   return extra.length ? ROLE_ORDER.filter(r => v.includes(r) || extra.includes(r)) : v;
 }
-function ourRolesFor(c) { const b = ourRolesFor__base(c), rr = viableRoles(c), f = b.filter(r => rr.includes(r)); return f.length ? f : b; }
 // Quants picks poden tenir rol propi alhora, només amb rols viables (Corki, Smolder, Varus... compten com a Bot)
 function maxRoleMatching(champs) {
   const matchRole = [-1, -1, -1, -1, -1];
@@ -55,13 +53,6 @@ function renderTagFilters() {
   }
   el.innerHTML = TAG_FILTERS.map(([t, l]) => `<span class="pill ${state.tagFilters.has(t) ? 'active' : ''}" onclick="toggleTagFilter('${t}')">${l}</span>`).join('')
     + (state.tagFilters.size ? '<span class="pill pill-clear" onclick="clearTagFilters()">✕ Treu estils</span>' : '');
-}
-function renderChampGrid() {
-  renderChampGrid__base();
-  const grid = document.getElementById('champGrid');
-  if (grid && state.tagFilters.size && !grid.querySelector('.champ-chip')) {
-    grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.8rem;padding:8px;">Cap campió amb tots aquests estils (${[...state.tagFilters].map(t => (TAG_FILTERS.find(x => x[0] === t) || [t, t])[1]).join(' + ')})${state.roleFilter !== 'ALL' ? ' i aquest filtre' : ''}.</div>`;
-  }
 }
 
 // Sinergies amb duos reals inclosos

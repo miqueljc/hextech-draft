@@ -35,8 +35,6 @@ function duoRec(a, b) {
   }
   return _duoRec.get([a, b].sort().join('|')) || null;
 }
-function saveHist() { saveHist__base(); _duoRec = null; }
-function afterDataChange() { _teamRec = null; _duoRec = null; try { _assignCache.clear(); } catch (e) {} afterDataChange__w(); }
 
 // --- 2. Recomanacions: parelles que ja heu jugat juntes (mínim 2 partides, mostra encongida) ---
 function recommendChamps(ctx, excludeIdx) {

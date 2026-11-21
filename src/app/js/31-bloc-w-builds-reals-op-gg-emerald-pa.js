@@ -120,7 +120,6 @@ function loadRealBuilds() {
   else REAL_BUILDS = REAL_BUILDS_DEFAULT;
 }
 loadRealBuilds();
-function afterDataChange__w() { loadRealBuilds(); afterDataChange__u(); }
 // Icones que el catàleg desat encara no tenia (Data Dragon les afegeix sol si hi ha connexió)
 (function addItemIds() {
   try {
@@ -392,7 +391,7 @@ function buildStrategy() {
 }
 function deepPlanHtml(s) {
   if (!s.deep) return '';
-  return `<div class="strat-card" style="grid-column: 1 / -1;">
+  return `<div class="strat-card" data-keep-open="1" style="grid-column: 1 / -1;">
     <h4>📋 Com jugar aquesta partida</h4>
     <div class="dp-grid">
       <div><strong>Teamfights</strong><ul>${s.deep.tf.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
@@ -400,17 +399,6 @@ function deepPlanHtml(s) {
     </div>
     <p class="dp-src">Els winrates de línia són de partides reals (Metabot, Emerald+). La resta són regles a partir de les etiquetes dels campions; feu-les servir com a punt de partida, no com a veritat absoluta.</p>
   </div>`;
-}
-function generateStrategy() {
-  generateStrategy__base();
-  try {
-    const s = buildStrategy(), el = document.getElementById('strategyContent');
-    if (!el || !s.deep) return;
-    const cards = el.querySelectorAll('.strat-card');
-    const anchor = Array.from(cards).find(c => /Pla per fases/.test(c.textContent));
-    const tmp = document.createElement('div'); tmp.innerHTML = deepPlanHtml(s);
-    if (anchor && tmp.firstElementChild) anchor.insertAdjacentElement('afterend', tmp.firstElementChild);
-  } catch (e) { console.warn('deepPlanHtml', e); }
 }
 const _copyDiscordPlanBaseW = typeof copyDiscordPlan === 'function' ? copyDiscordPlan : null;
 (function wStyles() {

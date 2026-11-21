@@ -61,10 +61,11 @@ function playerRoles(p) { return ROLE_ORDER.filter(r => playsRole(p, r)); }
 function shortName(p) { return ROSTER[p].name.split('#')[0]; }
 
 // Rols on algú de l'equip pot jugar un campió (flex REAL nostre)
-function ourRolesFor__base(c) {
+function ourRolesFor(c) {
   const s = new Set();
   ROSTER.forEach((pl, p) => ROLE_ORDER.forEach(r => { if (poolOf(p, r).includes(c)) s.add(r); }));
-  return ROLE_ORDER.filter(r => s.has(r));
+  const listed = ROLE_ORDER.filter(r => s.has(r)), viable = viableRoles(c), f = listed.filter(r => viable.includes(r));
+  return f.length ? f : listed;
 }
 function ourPlayersFor(c) {
   const out = [];
@@ -104,7 +105,10 @@ function phaseOf(c) {
   if ((isReactive(c) && my.length < 2) || (my.length === 1 && pub <= 1 && bt !== 'S+')) return 3;
   return flexScoreOf(c) >= 12 ? 1 : 2;
 }
-function phaseAdviceHtml__base(k) {
+function phaseAdviceHtml(k) {
+  const pos = draftPos();
+  if (pos.enemyAfter === 0) return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
+  if (k >= 3) return `<br><span style="color:var(--gold);">🧠 Pick final vostre, però el rival encara en té ${pos.enemyAfter}:</span> us pot respondre. Eviteu picks que tinguin counters disponibles al rol que li falta i guardeu el counter-pick per a l'últim slot si en teniu.`;
   if (k <= 1) return `<br><span style="color:var(--gold);">🧠 Fase 1 (informació mínima):</span> tria <strong>flex</strong> i picks <strong>segurs a cegues</strong>; guarda per al final els picks d'un sol rol i els reactius (Pyke, Malphite, Poppy…). Tot el que triïs ho veurà el rival.`;
   if (k <= 3) return `<br><span style="color:var(--gold);">🧠 Fase 2:</span> ja heu mostrat bastant; completa el que falta (frontline / engage / dany) i comença a respondre als seus picks. Deixa <strong>1-2 rols oberts</strong> per decidir el final.`;
   return `<br><span style="color:var(--gold);">🧠 Últim pick:</span> el rival ja no pot respondre → counter-pick lliure i omple el rol que falta.`;
@@ -117,7 +121,7 @@ function playerRoleScore(p, r) {
   if (!playsRole(p, role)) return -8;
   return pl.roleShare && pl.roleShare[role] >= 30 ? 6 : 3;
 }
-function playerChampFit__base(p, r, c) {
+function playerChampFit(p, r, c) {
   const pl = ROSTER[p], role = ROLE_ORDER[r];
   let s = 0;
   if (poolOf(p, role).includes(c)) {
@@ -129,7 +133,7 @@ function playerChampFit__base(p, r, c) {
   } else if (pl.pool.includes(c)) s += 4 + Math.round(champRating(p, c) * 0.3);
   else s -= 15;
   if (CHAMP_DATA[c]) s += CHAMP_DATA[c].roles.includes(ROLE_LETTER[role]) ? 15 : -10;
-  return s;
+  return s + teamRecBonus(p, c);
 }
 
 const _assignCache = new Map();

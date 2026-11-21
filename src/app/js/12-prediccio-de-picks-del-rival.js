@@ -1,5 +1,6 @@
 // ================= PREDICCIÓ DE PICKS DEL RIVAL =================
-function predictionHtml__base(ctx, max = 4) {
+function predictionHtml(ctx, max = 4) {
+  if (draftPos().enemyAfter === 0 || ctx.enemyPicks.length >= 5) return '';
   const pr = predictEnemy(ctx).slice(0, max);
   if (!pr.length) return '';
   const line = pr.map(x => {

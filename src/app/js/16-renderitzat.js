@@ -1,5 +1,5 @@
 // ================= RENDERITZAT =================
-function renderAll__base() {
+function renderAll() {
   renderSlots();
   const ranked = evaluateComps();
   document.getElementById('liveAdviceText').innerHTML = getLiveAdvice(ranked);
@@ -8,6 +8,7 @@ function renderAll__base() {
   renderCompsRanking(ranked);
   renderChampGrid();
   renderFearlessPanel();
+  if (MM.open) { try { renderMatch(); } catch (e) { console.warn('renderMatch', e); } }
 }
 
 function renderSlots() {
@@ -93,7 +94,7 @@ function renderAssignment() {
     : '<div style="color:var(--text-muted);font-size:0.78rem;">Encara no hi ha picks rivals.</div>';
 }
 
-function renderChampGrid__base() {
+function renderChampGrid() {
   const q = document.getElementById('champSearch').value.toLowerCase().trim();
   const unavailable = getUnavailableChamps();
   const poolSet = new Set(ROSTER.flatMap(r => r.pool));
@@ -115,8 +116,7 @@ function renderChampGrid__base() {
   const grid = document.getElementById('champGrid');
   if (state.roleFilter === 'REC' && !filtered.length) {
     grid.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px;">Les recomanacions només apareixen quan és el torn de PICK del vostre equip.</div>';
-    return;
-  }
+  } else {
   if (state.roleFilter === 'REC') filtered.sort((a, b) => recRank.get(a) - recRank.get(b));
 
   grid.innerHTML = filtered.map(champ => {
@@ -135,6 +135,10 @@ function renderChampGrid__base() {
 
     </div>`;
   }).join('');
+  }
+  if (grid && state.tagFilters.size && !grid.querySelector('.champ-chip')) {
+    grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.8rem;padding:8px;">Cap campió amb tots aquests estils (${[...state.tagFilters].map(t => (TAG_FILTERS.find(x => x[0] === t) || [t, t])[1]).join(' + ')})${state.roleFilter !== 'ALL' ? ' i aquest filtre' : ''}.</div>`;
+  }
 }
 
 function toggleSelectComp(id) {

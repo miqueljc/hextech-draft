@@ -156,7 +156,7 @@ const VERDICT_UI = {
   unknown: { icon: '⏳', color: 'var(--text-muted)', label: 'Pendent' }
 };
 
-function generateStrategy__base() {
+function generateStrategy() {
   const s = buildStrategy();
   const { comp, A, B } = s;
   const enemyNames = B.list.length ? B.list.join(', ') : 'rival pendent';
@@ -213,7 +213,7 @@ function generateStrategy__base() {
       </table></div>
       ${s.laneSummary.length ? `<ul style="margin-top:8px;">${s.laneSummary.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : ''}
     </div>
-    ${phasePlanHtml(s.phasePlan)}
+    ${phasePlanHtml(s.phasePlan)}${/Pla per fases/.test(phasePlanHtml(s.phasePlan)) ? deepPlanHtml(s) : ''}
     <div class="strat-card">
       <h4>⏱️ Timings segons el matchup</h4>
       <p><strong>Early (Min 1-14):</strong> ${escapeHtml(s.early)}</p>

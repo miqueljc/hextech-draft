@@ -27,7 +27,7 @@ function makeCollapsible(container, openFirst = 3) {
   cards.forEach((card, i) => {
     const h = card.querySelector('h4');
     if (!h) return;
-    if (i >= openFirst) card.classList.add('collapsed');
+    if (i >= openFirst && !card.dataset.keepOpen) card.classList.add('collapsed');
     h.onclick = () => card.classList.toggle('collapsed');
   });
 }

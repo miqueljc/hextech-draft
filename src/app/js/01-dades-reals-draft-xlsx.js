@@ -347,12 +347,14 @@ function resetDraft() {
   renderAll();
 }
 
-function updateEnemyOtps__base() {
+function updateEnemyOtps() {
   const raw = document.getElementById('enemyOtpInput').value;
   state.enemyOtps = raw.split(',').map(s => s.trim()).filter(Boolean);
   const container = document.getElementById('enemyOtpBadges');
   container.innerHTML = state.enemyOtps.map(c => `<span class="badge-target">⚠️ ${c}</span>`).join('');
   renderAll();
+  const inp = document.getElementById('enemyOtpInput');
+  if (inp && state.scout) { state.scout.otps = inp.value; saveScout(); }
 }
 
 

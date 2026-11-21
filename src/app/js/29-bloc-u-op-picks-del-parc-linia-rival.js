@@ -3,7 +3,6 @@
 let OP_PICKS = OP_PICKS_DEFAULT;
 function loadOpPicks() { const o = lsGet('hextech_oppicks_v1'); OP_PICKS = (o && o.roles) ? o : OP_PICKS_DEFAULT; }
 loadOpPicks();
-function afterDataChange__u() { loadOpPicks(); afterDataChange__s(); }
 function isOpIn(c, r) { return ((OP_PICKS.roles || {})[r] || []).includes(c); }
 function inRolePool(c, r) { return ROSTER.some((pl, p) => poolOf(p, r).includes(c)); }
 const OP_BONUS = 14, COUNTER_BONUS = 12;
@@ -68,16 +67,6 @@ function getLiveAdvice__u(ranked) {
 function flagBadges(r) {
   if (!r || !r.flags) return '';
   return (r.flags.op ? `<span class="fl-op" title="OP del parc a ${r.flags.op}">OP</span>` : '') + (r.flags.counter ? `<span class="fl-ct" title="Counter contra ${escapeHtml(r.flags.counter)}">Counter</span>` : '');
-}
-function mmOurPick() {
-  let h = mmOurPick__base();
-  try {
-    recommendChamps(buildCtx(), state.activeSlot.index).slice(0, 3).forEach(r => {
-      const b = flagBadges(r); if (!b) return;
-      h = h.replace(`<b>${escapeHtml(r.champ)}</b></span><span class="mm-pts">`, `<b>${escapeHtml(r.champ)}</b> ${b}</span><span class="mm-pts">`);
-    });
-  } catch (e) {}
-  return h;
 }
 (function uStyles() {
   const css = `.fl-op, .fl-ct { display:inline-block; font-family:'Segoe UI',system-ui,sans-serif; font-size:0.6rem; font-weight:800; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-left:3px; letter-spacing:0; }

@@ -35,15 +35,7 @@ function sharedRivalsHtml() {
     <select id="rvSel" onchange="if(this.value)loadSharedRival(this.value)"><option value="">Tria un rival…</option>${teams.map(t => `<option value="${escapeHtml(t.id)}" ${t.id === cur ? 'selected' : ''}>${escapeHtml(t.name || t.id)} (${escapeHtml(t.updated || '')})</option>`).join('')}</select>
     ${cur ? `<span class="rv-meta">Carregat: ${escapeHtml(state.scout.team)} · ${escapeHtml(state.scout.updated || '')}${state.scout.source ? ' · ' + escapeHtml(state.scout.source) : ''}</span>` : ''}</div>`;
 }
-function renderScout() {
-  renderScout__base();
-  const el = document.getElementById('scoutPanel'); if (!el) return;
-  const h = sharedRivalsHtml(); if (!h) return;
-  const d = document.createElement('div'); d.innerHTML = h; el.insertBefore(d.firstElementChild, el.children[2] || null);
-}
-function afterDataChange__s() { afterDataChange__q(); try { refreshSharedRival(); renderScout(); } catch (e) { console.warn('rivals', e); } }
 // En editar la fitxa a mà deixa de seguir la versió compartida
-function scoutAnalyze() { if (state.scout) { state.scout.sharedId = null; } scoutAnalyze__base(); }
 (function sStyles() {
   const css = `.rv-box{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
   .rv-box select{background:#050B14;border:1px solid var(--border-gold);color:var(--text-main);border-radius:6px;padding:5px 8px;font-size:0.78rem;max-width:100%}
